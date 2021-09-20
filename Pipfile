@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+linkml-runtime = "*"
+jsonpath-ng = "*"
+"ruamel.yaml" = "*"
+jsonpatch = "*"
+jinja2 = "*"
+
+[dev-packages]
+
+[pipenv]
+allow_prereleases = true

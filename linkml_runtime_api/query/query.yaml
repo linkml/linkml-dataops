@@ -1,0 +1,108 @@
+id: https://w3id.org/linkml/query
+title: LinkML Query Datamodel
+name: query
+description: |-
+  A generic datamodel for representing query
+
+license: https://creativecommons.org/publicdomain/zero/1.0/
+see_also:
+  - https://datatracker.ietf.org/doc/html/rfc6902
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  query: https://w3id.org/linkml/query
+  skos: http://www.w3.org/2004/02/skos/core#
+  schema: http://schema.org/
+
+default_prefix: query
+default_range: string
+
+default_curi_maps:
+  - semweb_context
+
+emit_prefixes:
+  - linkml
+  - query
+
+imports:
+  - linkml:types
+
+#==================================
+# Types                           #
+#==================================
+types:
+  PathExpression:
+    base: str
+    uri: xsd:string
+    description: |-
+      A path expression conformant to [rfc6901](https://datatracker.ietf.org/doc/html/rfc6901)
+    see_also:
+      - https://datatracker.ietf.org/doc/html/rfc6901
+
+#==================================
+# Slots                           #
+#==================================
+slots:
+  path:
+    range: PathExpression
+
+#==================================
+# Classes                         #
+#==================================
+classes:
+  MyAny:
+    class_uri: linkml:Any
+
+  AbstractQuery:
+    abstract: true
+
+  FetchById:
+    is_a: AbstractQuery
+    attributes:
+      id: string
+      path:
+        range: PathExpression
+      target_class:
+        range: string
+
+  FetchQuery:
+    is_a: AbstractQuery
+    attributes:
+      constraints:
+        multivalued: true
+        range: Constraint
+        inlined: true
+      path:
+        range: PathExpression
+      target_class:
+        range: string
+
+  Constraint:
+    attributes:
+      negated:
+        range: boolean
+
+  MatchConstraint:
+    is_a: Constraint
+    attributes:
+      op:
+      left:
+      right:
+        range: MyAny
+
+  OrConstraint:
+    is_a: Constraint
+    attributes:
+      subconstraints:
+        multivalued: true
+        range: Constraint
+        inlined: true
+    
+    
+
+
+
+
+
+
+
