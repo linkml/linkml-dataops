@@ -1,8 +1,8 @@
 id: https://w3id.org/linkml/changes
 title: LinkML Changes Datamodel
-name: changes
+name: linkml changes
 description: |-
-  A generic datamodel for representing changes
+  A generic datamodel for representing changes on objects
 
 license: https://creativecommons.org/publicdomain/zero/1.0/
 see_also:
@@ -44,10 +44,16 @@ types:
 #==================================
 slots:
   path:
+    description: |-
+      represents a path traversing from a parent object through slots recursively to child objects
     range: PathExpression
   value:
+    description: |-
+      the main change body. For Add changes, this is the new object
     range: ChangeTarget
   parent:
+    description: |-
+      The object to which the change is being applied to
     range: ChangeTarget
   primary_key_slot:
     range: string
@@ -57,11 +63,20 @@ slots:
 #==================================
 classes:
   ChangeTarget:
+    description: |-
+      The body of the change being applied
     class_uri: linkml:Any
 
   Change:
+    description: |-
+      An abstract class that is the parent of all change objects.
+
+      A change object represents a patch that can be applied to an object
+      yielding a modified object
+    abstract: true
     aliases:
-      - changer
+      - patch
+      - diff
     slots:
       - path
       - parent
@@ -69,18 +84,52 @@ classes:
       - primary_key_slot
 
   AddObject:
+    description: |-
+      A change object that represents the addition of an object to another object
     is_a: Change
+    slot_usage:
+      parent:
+        description: the object to which the new object is being added to
+      value:
+        description: the object being added
 
   RemoveObject:
+    aliases:
+      - deletion
+    description: |-
+      A change object that represents the removal of an object from another object
     is_a: Change
+    slot_usage:
+      parent:
+        description: the object to which the new object is being removed from
+      value:
+        description: the object being removed. Can be an identifier or whole object
 
   Rename:
+    aliases:
+      - rewire
+      - change identifier
+    description: |-
+      A change object that represents changing the name/identifier of an object,
+      together with cascading changes to referencing objects
     is_a: Change
     attributes:
       old_value:
+        range: string
+        description: primary key for object being renamed
       target_class:
+    slot_usage:
+      value:
+        description: new primary key value
+        range: string
 
   SetValue:
+    aliases:
+      - assign
+      - set
+      - let
+    description: |-
+      A change object that represents setting the value of a slot
     is_a: Change
     abstract: true
 

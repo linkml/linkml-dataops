@@ -32,9 +32,9 @@ class ApiGeneratorTestCase(unittest.TestCase):
         with open(API_SCHEMA, 'w') as stream:
             stream.write(gen.serialize())
         api_view = SchemaView(API_SCHEMA)
-        for cn, c in api_view.all_class().items():
+        for cn, c in api_view.all_classes().items():
             logging.info(f'C={cn}')
-        assert 'AddPerson' in api_view.all_class()
+        assert 'AddPerson' in api_view.all_classes()
 
 
 if __name__ == '__main__':

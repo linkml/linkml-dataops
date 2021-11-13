@@ -88,11 +88,13 @@ class PythonApiGenerator(ApiRoot):
           ...
         def query_Person(id: str, name: str, ...) -> List[Person]:
           ...
+
+    The API object can be used in conjunction with any engine
     """
 
     def serialize(self, container_class=None, python_path=''):
         sv = self.schemaview
-        cns = sv.all_class(imports=False).keys()
+        cns = sv.all_classes(imports=False).keys()
         if container_class != None:
             cns = self._get_top_level_classes(container_class)
         template_obj = Template(jinja2_template)

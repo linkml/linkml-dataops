@@ -26,9 +26,12 @@ value:
       is_current: true
 """
 
-class ObjectPatcherTestCase(unittest.TestCase):
+class ObjectChangerTestCase(unittest.TestCase):
+    """
+    Tests in-memory object changer
+    """
 
-    def test_object_patcher(self):
+    def test_add_remove(self):
         view = SchemaView(SCHEMA)
         patcher = ObjectChanger(schemaview=view)
         d = Dataset(persons=[Person('foo')])
@@ -60,6 +63,9 @@ class ObjectPatcherTestCase(unittest.TestCase):
         assert next(p for p in d.persons if p.id == 'P1').aliases == ['fred']
 
     def test_rename(self):
+        """
+        Tests renaming (providing new identifier)
+        """
         view = SchemaView(SCHEMA)
         patcher = ObjectChanger(schemaview=view)
         dataset = yaml_loader.load(DATA, target_class=Dataset)
@@ -70,6 +76,36 @@ class ObjectPatcherTestCase(unittest.TestCase):
         logging.info(yaml_dumper.dumps(dataset))
         assert dataset.persons[0].id == 'P:999'
         assert dataset.persons[1].has_familial_relationships[0].related_to == 'P:999'
+
+    @unittest.skip
+    def test_set_value(self):
+        assert True  # TODO: implement this
+
+    def test_append(self):
+        view = SchemaView(SCHEMA)
+        patcher = ObjectChanger(schemaview=view)
+        dataset = Dataset()
+        change = Append(value=Person('P:1234'))
+        patcher.apply(change, dataset)
+        logging.info(dataset)
+        #print(yaml_dumper.dumps(dataset))
+        person = dataset.persons[0]
+        assert person.id == 'P:1234'
+        change = Append(value=FamilialRelationship(related_to='P:4', type='SIBLING_OF'),
+                        path='has_familial_relationships')
+        patcher.apply(change, person)
+        logging.info(dataset)
+        #print(yaml_dumper.dumps(dataset))
+        assert dataset.persons[0].has_familial_relationships[0].related_to == 'P:4'
+
+    #@unittest.skip
+    def test_get_path(self):
+        view = SchemaView(SCHEMA)
+        patcher = ObjectChanger(schemaview=view)
+        person = Person('P:1')
+        change = Append(value=FamilialRelationship(related_to='P:4', type='SIBLING_OF'))
+        patcher._locate_object(change, person)
+
 
     def test_generated_api(self):
         view = SchemaView(SCHEMA)

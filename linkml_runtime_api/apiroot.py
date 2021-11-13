@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from linkml_runtime.utils.schemaview import SchemaView
 from linkml_runtime.utils.yamlutils import YAMLRoot
 
+PATH_EXPRESSION = str
 
 @dataclass
 class ApiRoot(ABC):
@@ -19,9 +20,15 @@ class ApiRoot(ABC):
 
     schemaview: SchemaView = None
 
-    def select_path(self, path: str, element: YAMLRoot) -> YAMLRoot:
+    def select_path(self, path: PATH_EXPRESSION, element: YAMLRoot) -> YAMLRoot:
         """
         Return the sub-element matching the path expression
+
+        The query path is a slash-delimited list of slot names, indicating
+        a path from the element to the return value
+
+        For example, calling with path='a/b/c' to element=x yields
+        x.a.b.c
 
         :param path: query path
         :param element: object to be queried

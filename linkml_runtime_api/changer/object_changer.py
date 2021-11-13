@@ -14,11 +14,13 @@ class ObjectChanger(Changer):
 
     def apply(self, change: Change, element: YAMLRoot, in_place=True) -> ChangeResult:
         """
-        Apply a change directly to an in-memory object tree
+        Apply a change directly to an element in an in-memory object tree
 
-        :param change:
-        :param element:
-        :param in_place:
+        change objects must be generic change objects
+
+        :param change: any subtype of Change
+        :param element: where the change is being applied
+        :param in_place: if true, modify element directly
         :return:
         """
         change = self._map_change_object(change)

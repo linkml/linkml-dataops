@@ -23,6 +23,14 @@ def _roundtrip(element: YAMLRoot) -> dict:
     return json_loader.loads(jsonstr, target_class=typ)
 
 class JsonPatchMakerTestCase(unittest.TestCase):
+    """
+    Tests JsonPatchChanger
+
+    this translates a change object into a JSON Patch.
+
+    This patch can then be converted using any JSON-Patch supporting tool,
+    including the Python implementation
+    """
 
     def test_make_jsonpatch(self):
         view = SchemaView(SCHEMA)

@@ -13,19 +13,30 @@ from tests import MODEL_DIR, INPUT_DIR
 SCHEMA = os.path.join(MODEL_DIR, 'kitchen_sink.yaml')
 DATA = os.path.join(INPUT_DIR, 'kitchen_sink_inst_01.yaml')
 
-class ObjectPatcherTestCase(unittest.TestCase):
+class DifferTestCase(unittest.TestCase):
+    """
+    Note: this test largely subsumed by test_object_changer
+    """
 
     def test_rename(self):
+        """
+        test renaming objects
+
+        note: here 'name' refers to identifier
+        """
         view = SchemaView(SCHEMA)
         patcher = ObjectChanger(schemaview=view)
         dataset = yaml_loader.load(DATA, target_class=Dataset)
         dataset: Dataset
+        # rewire existing object from P:001 to P:999 and test changes cascade
         change = Rename(value='P:999', old_value='P:001', target_class='Person')
         result = patcher.apply(change, dataset, in_place=False)
         new_dataset = result.object
         assert dataset.persons[0].id == 'P:001'
         assert new_dataset.persons[0].id == 'P:999'
+        # test changes cascade to references
         assert new_dataset.persons[1].has_familial_relationships[0].related_to == 'P:999'
+        # person diff
         de = DiffEngine()
         patch = de.diff(dataset, new_dataset)
         for p in patch:
