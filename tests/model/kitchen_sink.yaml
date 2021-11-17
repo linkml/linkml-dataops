@@ -186,6 +186,7 @@ classes:
         range: Person
 
   Dataset:
+    tree_root: true
     attributes:
       persons:
         range: Person

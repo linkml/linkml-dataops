@@ -94,8 +94,11 @@ class Changer(ApiRoot):
             # find potential slots in element
             # TODO: replace this with a SchemaView method
             for cn, c in sv.all_classes().items():
+                if cn != type(element).class_name:
+                    continue
                 for slot in sv.class_induced_slots(cn):
-                    if slot.inlined and slot.range == target_cn:
+                    #if slot.inlined and slot.range == target_cn:
+                    if slot.range == target_cn:
                         k = underscore(slot.name)
                         paths.append(f'/{k}')
             if len(paths) > 1:
@@ -123,6 +126,12 @@ class Changer(ApiRoot):
         return getattr(change.value, pk_slot)
 
     def _get_primary_key(self, change: Change) -> str:
+        """
+        Gets the primary key slot for a change.
+        If not explicitly set, this is the identifier slot for the valye
+        :param change:
+        :return:
+        """
         if change.primary_key_slot is None:
             sv = self.schemaview
             if sv is None:

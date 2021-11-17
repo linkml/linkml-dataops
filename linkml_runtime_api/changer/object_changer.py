@@ -59,9 +59,22 @@ class ObjectChanger(Changer):
         else:
             v = self._get_primary_key_value(change)
         if isinstance(place, list):
-            if change.value not in place:
+            ix = None
+            if change.value in place:
+                ix = place.index(change.value)
+            if ix is None:
+                pk = self._get_primary_key(change)
+                if pk:
+                    for i in range(0,len(place)):
+                        if getattr(place[i], pk) == v:
+                            ix = i
+                            break
+            if ix is None:
                 raise Exception(f'value {v} not in list: {place}')
-            place.remove(change.value)
+            del place[ix]
+            #if change.value not in place:
+            #    raise Exception(f'value {v} not in list: {place}')
+            #place.remove(change.value)
         else:
             del place[v]
         return ChangeResult(object=element)

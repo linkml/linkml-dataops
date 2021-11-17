@@ -1,3 +1,4 @@
+# Test data
 persons:
   - id: P:001
     name: fred bloggs
@@ -5,6 +6,7 @@ persons:
   - id: P:002
     name: joe schmoe
     has_employment_history:
+      # joe's history
       - employed_at: ROR:1
         started_at_time: 2019-01-01
         is_current: true

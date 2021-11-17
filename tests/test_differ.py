@@ -41,6 +41,7 @@ class DifferTestCase(unittest.TestCase):
         patch = de.diff(dataset, new_dataset)
         for p in patch:
             logging.info(p)
+            #print(p)
         assert len(list(patch)) > 0
 
 
