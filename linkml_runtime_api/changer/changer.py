@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from linkml_runtime.utils.formatutils import underscore
 
-from linkml_runtime_api.apiroot import ApiRoot
+from linkml_runtime_api.apiroot import ApiRoot, PATH_EXPRESSION
 from linkml_runtime_api.changer.changes_model import Change, AddObject, RemoveObject
 from linkml_runtime.utils.yamlutils import YAMLRoot
 
@@ -23,6 +23,13 @@ class Changer(ApiRoot):
     """
 
     def apply(self, change: Change, element: YAMLRoot) -> ChangeResult:
+        """
+        Apply a change object to the change engine
+
+        :param change:
+        :param element:
+        :return:
+        """
         raise Exception(f'Base class')
 
     def _map_change_object(self, change: YAMLRoot) -> Change:
@@ -39,7 +46,7 @@ class Changer(ApiRoot):
         return None
 
 
-    def _path_to_jsonpath(self, path: str, element: YAMLRoot) -> str:
+    def _path_to_jsonpath(self, path: PATH_EXPRESSION, element: YAMLRoot) -> str:
         toks = path.split('/')
         nu = []
         curr_el = element
@@ -75,7 +82,7 @@ class Changer(ApiRoot):
         else:
             return self._path_to_jsonpath(self._get_path(change, element), element)
 
-    def _get_path(self, change: Change, element: YAMLRoot, strict=True) -> str:
+    def _get_path(self, change: Change, element: YAMLRoot, strict=True) -> PATH_EXPRESSION:
         if change.path is not None:
             return change.path
         else:
@@ -84,9 +91,14 @@ class Changer(ApiRoot):
             if sv is None:
                 raise Exception(f'Must pass path OR schemaview')
             paths = []
-            for cn, c in sv.all_class().items():
+            # find potential slots in element
+            # TODO: replace this with a SchemaView method
+            for cn, c in sv.all_classes().items():
+                if cn != type(element).class_name:
+                    continue
                 for slot in sv.class_induced_slots(cn):
-                    if slot.inlined and slot.range == target_cn:
+                    #if slot.inlined and slot.range == target_cn:
+                    if slot.range == target_cn:
                         k = underscore(slot.name)
                         paths.append(f'/{k}')
             if len(paths) > 1:
@@ -103,6 +115,9 @@ class Changer(ApiRoot):
         if change.parent is not None:
             return change.parent
         else:
+            # We need to obtain the path if it is not already given
+            # for example, if an append object is applied on object X,
+            # to append a Y, we need to know the slot that holds Ys
             path = self._get_path(change, element)
             return self.select_path(path, element)
 
@@ -111,6 +126,12 @@ class Changer(ApiRoot):
         return getattr(change.value, pk_slot)
 
     def _get_primary_key(self, change: Change) -> str:
+        """
+        Gets the primary key slot for a change.
+        If not explicitly set, this is the identifier slot for the valye
+        :param change:
+        :return:
+        """
         if change.primary_key_slot is None:
             sv = self.schemaview
             if sv is None:

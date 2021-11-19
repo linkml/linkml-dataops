@@ -10,6 +10,7 @@ from linkml_runtime.utils.schemaview import SchemaView
 from tests.model.kitchen_sink import Person, Dataset, FamilialRelationship
 from tests.model.kitchen_sink_api import AddPerson
 from tests import MODEL_DIR, INPUT_DIR
+from tests.test_changer_common import ChangerCommonTests
 
 SCHEMA = os.path.join(MODEL_DIR, 'kitchen_sink.yaml')
 DATA = os.path.join(INPUT_DIR, 'kitchen_sink_inst_01.yaml')
@@ -26,67 +27,68 @@ value:
       is_current: true
 """
 
-class ObjectPatcherTestCase(unittest.TestCase):
+class ObjectChangerTestCase(unittest.TestCase, ChangerCommonTests):
+    """
+    Tests in-memory object changer
+    """
 
-    def test_object_patcher(self):
+    def setUp(self):
         view = SchemaView(SCHEMA)
-        patcher = ObjectChanger(schemaview=view)
-        d = Dataset(persons=[Person('foo')])
-        new_person = Person(id='P1')
-        # ADD OBJECT
-        #obj = AddObject(value=new_person, path='/persons')
-        obj = AddObject(value=new_person)
-        rs = patcher.apply(obj, d)
-        logging.info(yaml_dumper.dumps(d))
-        assert new_person.id in [p.id for p in d.persons]
-        assert new_person in d.persons
+        self.patcher = ObjectChanger(schemaview=view)
 
-        obj = RemoveObject(value=new_person)
-        rs = patcher.apply(obj, d)
-        logging.info(yaml_dumper.dumps(d))
-        assert new_person.id not in [p.id for p in d.persons]
-        assert new_person not in d.persons
 
-        # add back
-        patcher.apply(AddObject(value=new_person), d)
 
-        # add to list
-        #obj = Append(value='fred', path='/persons/P1/aliases')
-        person = next(p for p in d.persons if p.id == 'P1')
-        logging.info(person)
-        obj = Append(value='fred', parent=person.aliases)
-        rs = patcher.apply(obj, d)
-        logging.info(yaml_dumper.dumps(d))
-        assert next(p for p in d.persons if p.id == 'P1').aliases == ['fred']
+    @unittest.skip
+    def test_set_value(self):
+        assert True  # TODO: implement this
 
-    def test_rename(self):
+
+    def test_remove_by_identifier(self):
+        """test removal of object by primary key"""
         view = SchemaView(SCHEMA)
         patcher = ObjectChanger(schemaview=view)
         dataset = yaml_loader.load(DATA, target_class=Dataset)
         dataset: Dataset
-        change = Rename(value='P:999', old_value='P:001', target_class='Person')
-        patcher.apply(change, dataset)
-        logging.info(dataset)
-        logging.info(yaml_dumper.dumps(dataset))
-        assert dataset.persons[0].id == 'P:999'
-        assert dataset.persons[1].has_familial_relationships[0].related_to == 'P:999'
+        change = RemoveObject(value=Person(id='P:002'))
+        r = patcher.apply(change, dataset)
+        print(yaml_dumper.dumps(dataset))
+        self.assertEqual(len(dataset.persons), 1)
+        self.assertEqual(dataset.persons[0].id, 'P:001')
 
-    def test_generated_api(self):
+    def test_duplicate_primary_key(self):
+        """
+        currently duplicates are allowed
+        """
         view = SchemaView(SCHEMA)
         patcher = ObjectChanger(schemaview=view)
-        dataset = yaml_loader.load(DATA, target_class=Dataset)
-        dataset: Dataset
-        frel = FamilialRelationship(related_to='P:001', type='SIBLING_OF')
-        person = Person(id='P:222', name='foo',
-                        has_familial_relationships=[frel])
-        change = AddPerson(value=person)
-        logging.info(change)
-        patcher.apply(change, dataset)
-        logging.info(dataset)
-        logging.info(yaml_dumper.dumps(dataset))
-        assert len(dataset.persons) == 3
-        assert dataset.persons[2].id == 'P:222'
-        assert dataset.persons[2].has_familial_relationships[0].related_to == 'P:001'
+        dataset = Dataset()
+        patcher.apply(AddObject(value=Person(id='P1', name='p1')), dataset)
+        patcher.apply(AddObject(value=Person(id='P1', name='p2')), dataset)
+        assert dataset.persons[0].id == 'P1'
+        self.assertEqual(len(dataset.persons), 2)
+        print(dataset.persons[0])
+        print(dataset.persons[1])
+        patcher.apply(RemoveObject(value=Person(id='P1')), dataset)
+        self.assertEqual(len(dataset.persons), 1)
+
+
+    def test_get_path(self):
+        view = SchemaView(SCHEMA)
+        patcher = ObjectChanger(schemaview=view)
+        person = Person('P:1')
+        app = Append(value=FamilialRelationship(related_to='P:4', type='SIBLING_OF'))
+        path = patcher._get_path(app, person)
+        #print(f'PATH={path}')
+        self.assertEqual(path, '/has_familial_relationships')
+        loc = patcher._locate_object(app, person)
+        #print(f'LOC={loc}')
+        self.assertEqual(loc, [])
+        dataset = Dataset()
+        patcher.apply(AddObject(value=person), dataset)
+        # TODO: paths of length > 1
+        #path = patcher._get_path(app, dataset)
+
+
 
     @unittest.skip
     def test_from_json(self):

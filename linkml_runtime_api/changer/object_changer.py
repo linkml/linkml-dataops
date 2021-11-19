@@ -14,11 +14,13 @@ class ObjectChanger(Changer):
 
     def apply(self, change: Change, element: YAMLRoot, in_place=True) -> ChangeResult:
         """
-        Apply a change directly to an in-memory object tree
+        Apply a change directly to an element in an in-memory object tree
 
-        :param change:
-        :param element:
-        :param in_place:
+        change objects must be generic change objects
+
+        :param change: any subtype of Change
+        :param element: where the change is being applied
+        :param in_place: if true, modify element directly
         :return:
         """
         change = self._map_change_object(change)
@@ -57,9 +59,22 @@ class ObjectChanger(Changer):
         else:
             v = self._get_primary_key_value(change)
         if isinstance(place, list):
-            if change.value not in place:
+            ix = None
+            if change.value in place:
+                ix = place.index(change.value)
+            if ix is None:
+                pk = self._get_primary_key(change)
+                if pk:
+                    for i in range(0,len(place)):
+                        if getattr(place[i], pk) == v:
+                            ix = i
+                            break
+            if ix is None:
                 raise Exception(f'value {v} not in list: {place}')
-            place.remove(change.value)
+            del place[ix]
+            #if change.value not in place:
+            #    raise Exception(f'value {v} not in list: {place}')
+            #place.remove(change.value)
         else:
             del place[v]
         return ChangeResult(object=element)

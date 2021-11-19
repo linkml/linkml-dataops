@@ -15,27 +15,47 @@ from linkml_runtime_api.apiroot import ApiRoot
 class ApiGenerator(ApiRoot):
     """
     Generates an API schema given a data schema
+
+    For each class MyClass, will generate:
+
+    .. code:: yaml
+
+      classes:
+        AddMyClass:
+          slot_usage:
+            value: range: MyClass
+        RemoveMyClass:
+          slot_usage:
+            value: range: MyClass
+        MyClassQuery:
+          slots: [constraints]
+        MyClassfetchById:   ## if MyClass has an identifier
+          slots: [id_value]
+
+    These generated classes can be used to represent changes and queries respectively
+
+    Instances of these objects can be used as currency in both changers and query engines respectively
     """
 
     def serialize(self, container_class=None):
         sv = self.schemaview
-        cns = sv.all_class(imports=False).keys()
+        cns = sv.all_classes(imports=False).keys()
         if container_class != None:
             cns = self._get_top_level_classes(container_class)
 
         src = sv.schema
         name = f'{src.name}_api'
         classes = {
-            "LocalChange" : {
-                "slots" : [
+            "LocalChange": {
+                "slots": [
                     "value",
                     "path"
                 ],
-                "mixin" : True
+                "mixin": True
             },
-            "LocalQuery" : {
-                "mixin" : True,
-                "slots" : [
+            "LocalQuery": {
+                "mixin": True,
+                "slots": [
                     "target_class",
                     "path"
                 ]
@@ -43,29 +63,29 @@ class ApiGenerator(ApiRoot):
         }
         schema = {
 
-            "id" : "https://w3id.org/linkml/tests/kitchen_sink_api",
-            "name" : name,
-            "description" : f"API for querying and manipulating objects from the {src.name} schema",
-            "prefixes" : {
-                name : "https://w3id.org/linkml/tests/kitchen_sink_api/",
-                "linkml" : "https://w3id.org/linkml/"
+            "id": "https://w3id.org/linkml/tests/kitchen_sink_api",
+            "name": name,
+            "description": f"API for querying and manipulating objects from the {src.name} schema",
+            "prefixes": {
+                name: "https://w3id.org/linkml/tests/kitchen_sink_api/",
+                "linkml": "https://w3id.org/linkml/"
             },
-            "default_prefix" : name,
-            "imports" : [
+            "default_prefix": name,
+            "imports": [
                 "linkml:types",
                 src.name
             ],
-            "default_range" : "string",
-            "slots" : {
-                "value" : {
-                    "inlined" : True
+            "default_range": "string",
+            "slots": {
+                "value": {
+                    "inlined": True
                 },
-                "path" : {},
-                "constraints" : {
-                    "range" : "Any"
+                "path": {},
+                "constraints": {
+                    "range": "Any"
                 },
-                "id_value" : {},
-                "target_class" : {}
+                "id_value": {},
+                "target_class": {}
             },
             "classes": classes
         }
@@ -79,38 +99,38 @@ class ApiGenerator(ApiRoot):
                 classes[f'Add{cn_camel}'] = {
                     "description": f'A change action that adds a {cn_camel} to a database',
                     "comments": copy(cmts),
-                    "mixins" : "LocalChange",
-                    "slot_usage" : {
-                        "value" : {
-                            "range" : cn,
-                            "inlined" : True
+                    "mixins": "LocalChange",
+                    "slot_usage": {
+                        "value": {
+                            "range": cn,
+                            "inlined": True
                         }
                     }
                 }
                 classes[f'Remove{cn_camel}'] = {
                     "description": f'A change action that remoaves a {cn_camel} to a database',
                     "comments": copy(cmts),
-                    "mixins" : "LocalChange",
-                    "slot_usage" : {
-                        "value" : {
-                            "range" : cn,
-                            "inlined" : True
+                    "mixins": "LocalChange",
+                    "slot_usage": {
+                        "value": {
+                            "range": cn,
+                            "inlined": True
                         }
                     }
                 }
             classes[f'{cn_camel}Query'] = {
                 "description": f'A query object for instances of {cn_camel} from a database',
                 "comments": copy(cmts),
-                "mixins" : "LocalChange",
-                "slots" : [
+                "mixins": "LocalChange",
+                "slots": [
                     "constraints"
                 ],
             }
             classes[f'{cn_camel}FetchById'] = {
                 "description": f'A query object for fetching an instance of {cn_camel} from a database by id',
                 "comments": copy(cmts),
-                "mixins" : "LocalChange",
-                "slots" : [
+                "mixins": "LocalChange",
+                "slots": [
                     "id_value"
                 ],
             }
@@ -120,7 +140,16 @@ class ApiGenerator(ApiRoot):
 @click.option('-R', '--container-class', help="name of class that contains top level objects")
 @click.argument('schema')
 def cli(schema,  **args):
-    """ Generate API """
+    """
+    Generates an API datamodel from an existing datamodel, both query and change classes.
+
+    Example: if a schema contains a class Person, the following classes will be generated:
+
+    Query classes: PersonQuery, PersonFetchById
+    Change classes: AddPerson, RemovePerson
+
+    These can be used with changer or query objects
+    """
     sv = SchemaView(schema)
     gen = ApiGenerator(schemaview=sv)
     print(gen.serialize(**args))

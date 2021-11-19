@@ -17,9 +17,19 @@ from tests import MODEL_DIR, INPUT_DIR
 SCHEMA = os.path.join(MODEL_DIR, 'kitchen_sink.yaml')
 DATA = os.path.join(INPUT_DIR, 'kitchen_sink_inst_01.yaml')
 
-class QueryTestCase(unittest.TestCase):
+class ObjectQueryEngineTestCase(unittest.TestCase):
+    """
+    Tests ObjectQueryEngine, all of
+
+    - generic API, generic query objects
+    - generic API, bespoke query objects
+    - bespoke API
+    """
 
     def test_query(self):
+        """
+        tests ObjectQueryEngine
+        """
         view = SchemaView(SCHEMA)
         qe = ObjectQueryEngine(schemaview=view)
         dataset = yaml_loader.load(DATA, target_class=Dataset)
@@ -79,10 +89,16 @@ class QueryTestCase(unittest.TestCase):
         assert len(results) == 1
         self.assertEqual(results[0].id, 'P:001')
 
-    def test_generated_api(self):
+    def test_query_with_domain_change_objects(self):
+        """
+        Tests generic ObjectQueryEngine using domain-specific change objects
+
+        """
         view = SchemaView(SCHEMA)
         qe = ObjectQueryEngine(schemaview=view)
         dataset = yaml_loader.load(DATA, target_class=Dataset)
+
+
         q = PersonQuery(constraints=[MatchConstraint(op='=', left='id', right='P:001')])
         logging.info(q)
         results = qe.fetch(q, dataset)
@@ -100,6 +116,12 @@ class QueryTestCase(unittest.TestCase):
         self.assertEqual(results[0].id, 'P:001')
 
     def test_bespoke_api(self):
+        """
+        Tests a bespoke generated domain API
+
+        Generated API  here: tests.model.kitchen_sink_api
+        note: if you need to change the datamodel, regenerate using gen-oython-api
+        """
         view = SchemaView(SCHEMA)
         qe = ObjectQueryEngine(schemaview=view)
         api = KitchenSinkAPI(query_engine=qe)
@@ -118,9 +140,6 @@ class QueryTestCase(unittest.TestCase):
         self.assertEqual(len(results), 1)
         person = results[0]
         self.assertEqual(person.id, 'P:001')
-
-
-
 
 
 
