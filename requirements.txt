@@ -13,5 +13,5 @@
 jinja2
 jsonpatch
 jsonpath-ng
-linkml-runtime
+linkml-runtime>= 1.1.6
 ruamel.yaml
