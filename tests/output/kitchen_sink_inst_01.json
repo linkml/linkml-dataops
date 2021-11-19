@@ -1,0 +1,59 @@
+{
+    "activities": [
+        {
+            "id": "A:1",
+            "started_at_time": "2019-01-01",
+            "was_associated_with": "Agent:987"
+        }
+    ],
+    "companies": [
+        {
+            "id": "ROR:1",
+            "name": "foo"
+        }
+    ],
+    "persons": [
+        {
+            "age_in_years": 33,
+            "id": "P:001",
+            "name": "fred bloggs"
+        },
+        {
+            "addresses": [
+                {
+                    "city": "foo city",
+                    "street": "1 foo street"
+                }
+            ],
+            "has_employment_history": [
+                {
+                    "employed_at": "ROR:1",
+                    "is_current": true,
+                    "started_at_time": "2019-01-01"
+                }
+            ],
+            "has_familial_relationships": [
+                {
+                    "related_to": "P:001",
+                    "type": "SIBLING_OF"
+                }
+            ],
+            "has_medical_history": [
+                {
+                    "diagnosis": {
+                        "id": "CODE:D0001",
+                        "name": "headache"
+                    },
+                    "in_location": "GEO:1234",
+                    "procedure": {
+                        "id": "CODE:P0001",
+                        "name": "trepanation"
+                    },
+                    "started_at_time": "2019-01-01"
+                }
+            ],
+            "id": "P:002",
+            "name": "joe schmoe"
+        }
+    ]
+}
