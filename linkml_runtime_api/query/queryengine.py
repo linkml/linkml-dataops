@@ -1,11 +1,11 @@
 import re
 import operator as op
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, List
 
 from linkml_runtime.utils.formatutils import camelcase, underscore
 
-from linkml_runtime_api.apiroot import ApiRoot
+from linkml_runtime_api.apiroot import ApiRoot, Database
 from linkml_runtime_api.query.query_model import FetchQuery, Constraint, MatchConstraint, OrConstraint, AbstractQuery, \
     FetchById
 from linkml_runtime.utils.yamlutils import YAMLRoot
@@ -28,19 +28,14 @@ def create_match_constraint(left: str, right: Any, op: str = "==") -> MatchConst
     else:
         return MatchConstraint(op=op, left=left, right=right)
 
-@dataclass
-class Database:
-    """
-    Abstraction over different datastores
 
-    Currently only one supported
-    """
-    document: YAMLRoot = None
 
 @dataclass
 class QueryEngine(ApiRoot):
     """
     Abstract base class for QueryEngine objects for querying over a database
+
+    Implementing classes must implement :func:
 
     Here a ref:`Database` can refer to:
     * in-memory object tree or JSON document
@@ -53,6 +48,9 @@ class QueryEngine(ApiRoot):
     """
 
     database: Database = None
+
+    def fetch_by_query(self, query: FetchQuery, element: YAMLRoot = None) -> List[YAMLRoot]:
+        raise NotImplementedError(f'{self} must implement this method')
 
     # TODO: avoid repetion with same method
     def _get_path(self, query: AbstractQuery, strict=True) -> str:

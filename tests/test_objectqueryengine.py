@@ -56,6 +56,34 @@ class ObjectQueryEngineTestCase(unittest.TestCase):
                                                     right='headache')])
         results = qe.fetch(q, dataset)
         self.assertEqual(results[0].id, 'P:002')
+        self.assertEqual(len(results), 1)
+
+        q = FetchQuery(target_class=Person.class_name,
+                       constraints=[MatchConstraint(op='like',
+                                                    left='has_medical_history/*/diagnosis/name',
+                                                    right='head%')])
+        results = qe.fetch(q, dataset)
+        self.assertEqual(results[0].id, 'P:002')
+        self.assertEqual(len(results), 1)
+        last_person = results[0]
+
+        # exemplar query
+        q = FetchQuery(target_class=Person.class_name,
+                       constraints=[MatchConstraint(op='==',
+                                                    left='.',
+                                                    right=last_person)])
+        results = qe.fetch(q, dataset)
+        self.assertEqual(results[0].id, 'P:002')
+        self.assertEqual(len(results), 1)
+
+        q = FetchQuery(target_class=Person.class_name,
+                       constraints=[MatchConstraint(op='==',
+                                                    left='has_medical_history',
+                                                    right=last_person.has_medical_history)])
+        results = qe.fetch(q, dataset)
+        self.assertEqual(results[0].id, 'P:002')
+        self.assertEqual(len(results), 1)
+
 
         # union queries
         def id_constraint(v):
@@ -73,6 +101,11 @@ class ObjectQueryEngineTestCase(unittest.TestCase):
         assert len(results) == 1
 
         q = FetchQuery(target_class=Person.class_name,
+                       constraints=[MatchConstraint(op='regex', left='name', right='^j[aeiou].*')])
+        results = qe.fetch(q, dataset)
+        assert len(results) == 1
+
+        q = FetchQuery(target_class=Person.class_name,
                        constraints=[MatchConstraint(op='like', left='name', right='joe')])
         results = qe.fetch(q, dataset)
         assert len(results) == 0
@@ -80,7 +113,7 @@ class ObjectQueryEngineTestCase(unittest.TestCase):
         q = FetchQuery(target_class=Person.class_name,
                        constraints=[MatchConstraint(op='like', left='name', right='%')])
         results = qe.fetch(q, dataset)
-        assert len(results) == 2
+        self.assertEqual(3, len(results))
 
         # by ID
         q = FetchById(id='P:001',
@@ -89,15 +122,17 @@ class ObjectQueryEngineTestCase(unittest.TestCase):
         assert len(results) == 1
         self.assertEqual(results[0].id, 'P:001')
 
-    def test_query_with_domain_change_objects(self):
+    def test_query_with_domain_crud_model(self):
         """
         Tests generic ObjectQueryEngine using domain-specific change objects
+
+        Uses tests.model.kitchen_sink_api
+        To regenerate this, use gen-crud-datamodel
 
         """
         view = SchemaView(SCHEMA)
         qe = ObjectQueryEngine(schemaview=view)
         dataset = yaml_loader.load(DATA, target_class=Dataset)
-
 
         q = PersonQuery(constraints=[MatchConstraint(op='=', left='id', right='P:001')])
         logging.info(q)
@@ -120,13 +155,13 @@ class ObjectQueryEngineTestCase(unittest.TestCase):
         Tests a bespoke generated domain API
 
         Generated API  here: tests.model.kitchen_sink_api
-        note: if you need to change the datamodel, regenerate using gen-oython-api
+        note: if you need to change the datamodel, regenerate using gen-python-api
         """
         view = SchemaView(SCHEMA)
         qe = ObjectQueryEngine(schemaview=view)
         api = KitchenSinkAPI(query_engine=qe)
         dataset = yaml_loader.load(DATA, target_class=Dataset)
-        qe.database = Database(document=dataset)
+        qe.database = Database(data=dataset)
         person = api.fetch_Person('P:001')
         logging.info(f'PERSON={person}')
         self.assertEqual(person.id, 'P:001')

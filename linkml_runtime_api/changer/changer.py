@@ -16,6 +16,8 @@ class Changer(ApiRoot):
     """
     Base class for engines that perform changes on elements
 
+    Implementing classes must implement :ref:`apply`
+
     Currently the most useful subclasses:
 
     * :class:`ObjectChanger` - operate directly on objects
@@ -30,7 +32,7 @@ class Changer(ApiRoot):
         :param element:
         :return:
         """
-        raise Exception(f'Base class')
+        raise NotImplementedError(f'{self} must implement this method')
 
     def _map_change_object(self, change: YAMLRoot) -> Change:
         if isinstance(change, Change):

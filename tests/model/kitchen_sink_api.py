@@ -1,5 +1,5 @@
 # Auto generated from kitchen_sink_api.yaml by pythongen.py version: 0.9.0
-# Generation date: 2021-09-19 04:09
+# Generation date: 2021-12-26T19:39:45
 # Schema: kitchen_sink_api
 #
 # id: https://w3id.org/linkml/tests/kitchen_sink_api
@@ -22,7 +22,7 @@ from linkml_runtime.utils.formatutils import camelcase, underscore, sfx
 from linkml_runtime.utils.enumerations import EnumDefinitionImpl
 from rdflib import Namespace, URIRef
 from linkml_runtime.utils.curienamespace import CurieNamespace
-from . kitchen_sink import Activity, ActivityId, Any, Company, CompanyId, Person, PersonId
+from . kitchen_sink import Activity, ActivityId, Company, CompanyId, Person, PersonId
 from linkml_runtime.linkml_model.types import String
 
 metamodel_version = "1.7.0"
@@ -31,7 +31,7 @@ metamodel_version = "1.7.0"
 dataclasses._init_fn = dataclasses_init_fn_with_kwargs
 
 # Namespaces
-KITCHEN_SINK_API = CurieNamespace('kitchen_sink_api', 'https://w3id.org/linkml/tests/kitchen_sink_api/')
+KITCHEN_SINK_API = CurieNamespace('kitchen_sink_api', 'https://w3id.org/linkml/tests/kitchen_sink/kitchen_sink_api/')
 LINKML = CurieNamespace('linkml', 'https://w3id.org/linkml/')
 DEFAULT_ = KITCHEN_SINK_API
 
@@ -85,6 +85,8 @@ class LocalQuery(YAMLRoot):
 
         super().__post_init__(**kwargs)
 
+
+Any = Any
 
 @dataclass
 class AddPerson(YAMLRoot):
@@ -149,12 +151,12 @@ class PersonQuery(YAMLRoot):
     class_model_uri: ClassVar[URIRef] = KITCHEN_SINK_API.PersonQuery
 
     constraints: Optional[Union[dict, Any]] = None
-    value: Optional[str] = None
+    target_class: Optional[str] = None
     path: Optional[str] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self.value is not None and not isinstance(self.value, str):
-            self.value = str(self.value)
+        if self.target_class is not None and not isinstance(self.target_class, str):
+            self.target_class = str(self.target_class)
 
         if self.path is not None and not isinstance(self.path, str):
             self.path = str(self.path)
@@ -254,12 +256,12 @@ class CompanyQuery(YAMLRoot):
     class_model_uri: ClassVar[URIRef] = KITCHEN_SINK_API.CompanyQuery
 
     constraints: Optional[Union[dict, Any]] = None
-    value: Optional[str] = None
+    target_class: Optional[str] = None
     path: Optional[str] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self.value is not None and not isinstance(self.value, str):
-            self.value = str(self.value)
+        if self.target_class is not None and not isinstance(self.target_class, str):
+            self.target_class = str(self.target_class)
 
         if self.path is not None and not isinstance(self.path, str):
             self.path = str(self.path)
@@ -359,12 +361,12 @@ class ActivityQuery(YAMLRoot):
     class_model_uri: ClassVar[URIRef] = KITCHEN_SINK_API.ActivityQuery
 
     constraints: Optional[Union[dict, Any]] = None
-    value: Optional[str] = None
+    target_class: Optional[str] = None
     path: Optional[str] = None
 
     def __post_init__(self, *_: List[str], **kwargs: Dict[str, Any]):
-        if self.value is not None and not isinstance(self.value, str):
-            self.value = str(self.value)
+        if self.target_class is not None and not isinstance(self.target_class, str):
+            self.target_class = str(self.target_class)
 
         if self.path is not None and not isinstance(self.path, str):
             self.path = str(self.path)
@@ -405,4 +407,38 @@ class ActivityFetchById(YAMLRoot):
 
 
 # Slots
+class slots:
+    pass
 
+slots.value = Slot(uri=KITCHEN_SINK_API.value, name="value", curie=KITCHEN_SINK_API.curie('value'),
+                   model_uri=KITCHEN_SINK_API.value, domain=None, range=Optional[str])
+
+slots.path = Slot(uri=KITCHEN_SINK_API.path, name="path", curie=KITCHEN_SINK_API.curie('path'),
+                   model_uri=KITCHEN_SINK_API.path, domain=None, range=Optional[str])
+
+slots.constraints = Slot(uri=KITCHEN_SINK_API.constraints, name="constraints", curie=KITCHEN_SINK_API.curie('constraints'),
+                   model_uri=KITCHEN_SINK_API.constraints, domain=None, range=Optional[Union[dict, Any]])
+
+slots.id_value = Slot(uri=KITCHEN_SINK_API.id_value, name="id_value", curie=KITCHEN_SINK_API.curie('id_value'),
+                   model_uri=KITCHEN_SINK_API.id_value, domain=None, range=Optional[str])
+
+slots.target_class = Slot(uri=KITCHEN_SINK_API.target_class, name="target_class", curie=KITCHEN_SINK_API.curie('target_class'),
+                   model_uri=KITCHEN_SINK_API.target_class, domain=None, range=Optional[str])
+
+slots.AddPerson_value = Slot(uri=KITCHEN_SINK_API.value, name="AddPerson_value", curie=KITCHEN_SINK_API.curie('value'),
+                   model_uri=KITCHEN_SINK_API.AddPerson_value, domain=AddPerson, range=Optional[Union[dict, Person]])
+
+slots.RemovePerson_value = Slot(uri=KITCHEN_SINK_API.value, name="RemovePerson_value", curie=KITCHEN_SINK_API.curie('value'),
+                   model_uri=KITCHEN_SINK_API.RemovePerson_value, domain=RemovePerson, range=Optional[Union[dict, Person]])
+
+slots.AddCompany_value = Slot(uri=KITCHEN_SINK_API.value, name="AddCompany_value", curie=KITCHEN_SINK_API.curie('value'),
+                   model_uri=KITCHEN_SINK_API.AddCompany_value, domain=AddCompany, range=Optional[Union[dict, Company]])
+
+slots.RemoveCompany_value = Slot(uri=KITCHEN_SINK_API.value, name="RemoveCompany_value", curie=KITCHEN_SINK_API.curie('value'),
+                   model_uri=KITCHEN_SINK_API.RemoveCompany_value, domain=RemoveCompany, range=Optional[Union[dict, Company]])
+
+slots.AddActivity_value = Slot(uri=KITCHEN_SINK_API.value, name="AddActivity_value", curie=KITCHEN_SINK_API.curie('value'),
+                   model_uri=KITCHEN_SINK_API.AddActivity_value, domain=AddActivity, range=Optional[Union[dict, Activity]])
+
+slots.RemoveActivity_value = Slot(uri=KITCHEN_SINK_API.value, name="RemoveActivity_value", curie=KITCHEN_SINK_API.curie('value'),
+                   model_uri=KITCHEN_SINK_API.RemoveActivity_value, domain=RemoveActivity, range=Optional[Union[dict, Activity]])

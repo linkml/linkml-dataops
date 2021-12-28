@@ -1,10 +1,22 @@
 from abc import ABC
 from dataclasses import dataclass
+from typing import Any
 
 from linkml_runtime.utils.schemaview import SchemaView
 from linkml_runtime.utils.yamlutils import YAMLRoot
 
 PATH_EXPRESSION = str
+
+@dataclass
+class Database:
+    """
+    Abstraction over different datastores
+
+    Currently only one supported
+    """
+    name: str = None
+    #document: YAMLRoot = None
+    data: Any = None
 
 @dataclass
 class ApiRoot(ABC):
@@ -13,8 +25,8 @@ class ApiRoot(ABC):
 
     This class only contains base methods and cannot be used directly. Instead use:
 
-    * Patcher -- for update operations on instances of a LinkML model
-    * QueryEngine -- for query operations on instances of a LinkML model
+    * :ref:`changer` -- for update operations on instances of a LinkML model
+    * :ref:`queryengine` -- for query operations on instances of a LinkML model
     """
 
 
@@ -69,6 +81,9 @@ class ApiRoot(ABC):
         if parts[0] == '':
             parts = parts[1:]
         if len(parts) == 0:
+            yield element
+            return
+        if parts == ['.']:
             yield element
             return
         new_path = '/'.join(parts[1:])
