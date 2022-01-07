@@ -54,6 +54,43 @@
             ],
             "id": "P:002",
             "name": "joe schmoe"
+        },
+        {
+            "addresses": [
+                {
+                    "city": "foo city",
+                    "street": "1 foo street"
+                }
+            ],
+            "has_employment_history": [
+                {
+                    "employed_at": "ROR:2",
+                    "is_current": false,
+                    "started_at_time": "2019-01-01"
+                }
+            ],
+            "has_familial_relationships": [
+                {
+                    "related_to": "P:003",
+                    "type": "PARENT_OF"
+                }
+            ],
+            "has_medical_history": [
+                {
+                    "diagnosis": {
+                        "id": "CODE:D0002",
+                        "name": "cough"
+                    },
+                    "in_location": "GEO:1234",
+                    "procedure": {
+                        "id": "CODE:P0002",
+                        "name": "cough medicine"
+                    },
+                    "started_at_time": "2019-01-01"
+                }
+            ],
+            "id": "P:003",
+            "name": "other person"
         }
     ]
 }
