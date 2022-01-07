@@ -34,7 +34,7 @@ class PythonApiGeneratorTestCase(unittest.TestCase):
         qe = ObjectQueryEngine(schemaview=view)
         api = mod.KitchenSinkAPI(query_engine=qe)
         dataset = yaml_loader.load(DATA, target_class=Dataset)
-        qe.database = Database(document=dataset)
+        qe.database = Database(data=dataset)
         person = api.fetch_Person('P:001')
         #print(f'PERSON={person}')
         self.assertEqual(person.id, 'P:001')

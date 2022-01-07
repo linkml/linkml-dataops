@@ -2,7 +2,7 @@ import logging
 import re
 import operator as op
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, List
 
 from linkml_runtime.utils.formatutils import camelcase, underscore
 
@@ -15,7 +15,10 @@ from linkml_runtime_api.query.queryengine import QueryEngine, create_match_const
 
 def like(x: Any, y: Any) -> bool:
     y = str(y).replace('%', '.*')
-    return re.match(f'^{y}$', str(x))
+    return re.match(f'^{y}$', str(x)) is not None
+
+def re_match(x: Any, y: str) -> bool:
+    return re.match(y, str(x)) is not None
 
 OPMAP = {'<': op.lt,
          '<=': op.le,
@@ -23,6 +26,7 @@ OPMAP = {'<': op.lt,
          '=': op.eq,
          '>=': op.ge,
          '>': op.gt,
+         'regex': re_match,
          'like': like}
 
 
@@ -58,7 +62,7 @@ class ObjectQueryEngine(QueryEngine):
 
     def fetch_by_id(self, query: FetchById, element: YAMLRoot = None):
         if element is None:
-            element = self.database.document
+            element = self.database.data
         pk = None
         tc = query.target_class
         for cn, c in self.schemaview.all_class().items():
@@ -72,9 +76,9 @@ class ObjectQueryEngine(QueryEngine):
                                               constraints=[c]),
                                    element)
 
-    def fetch_by_query(self, query: FetchQuery, element: YAMLRoot = None):
+    def fetch_by_query(self, query: FetchQuery, element: YAMLRoot = None) -> List[YAMLRoot]:
         if element is None:
-            element = self.database.document
+            element = self.database.data
         path = self._get_path(query)
         place = self.select_path(path, element)
         if isinstance(place, list):

@@ -25,6 +25,28 @@ persons:
     addresses:
       - street: 1 foo street
         city: foo city
+  - id: P:003
+    name: other person
+    has_employment_history:
+      # joe's history
+      - employed_at: ROR:2
+        started_at_time: 2019-01-01
+        is_current: false
+    has_familial_relationships:
+      - related_to: P:003
+        type: PARENT_OF
+    has_medical_history:
+      - started_at_time: 2019-01-01
+        in_location: GEO:1234
+        diagnosis:
+          id: CODE:D0002
+          name: cough
+        procedure:
+          id: CODE:P0002
+          name: cough medicine
+    addresses:
+      - street: 1 foo street
+        city: foo city
 companies:
   - id: ROR:1
     name: foo

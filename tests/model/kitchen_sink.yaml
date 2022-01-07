@@ -348,6 +348,10 @@ slots:
   metadata:
     range: Any
 
+  aliases:
+  ceo:
+    range: Person
+
 enums:
   FamilialRelationshipType:
     permissible_values:
