@@ -37,6 +37,8 @@ class ObjectChangerTestCase(unittest.TestCase, ChangerCommonTests):
         self.patcher = ObjectChanger(schemaview=view)
 
 
+    def test_add(self):
+        self._test_add()
 
     @unittest.skip
     def test_set_value(self):

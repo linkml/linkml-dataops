@@ -38,9 +38,11 @@ class ChangerCommonTests:
     def _test_all(self):
         self._test_add()
 
-    def test_add(self):
+    def _test_add(self):
         """Adds a top level element"""
         patcher = self.patcher
+        if patcher is None:
+            return
         d = Dataset(persons=[Person('foo', name='foo')])
         new_person = Person(id='P1', name='P1')
         # ADD OBJECT
@@ -54,10 +56,11 @@ class ChangerCommonTests:
         """Removes a top level element"""
         dataset = yaml_loader.load(DATA, target_class=Dataset)
         dataset: Dataset
+        n_persons = len(dataset.persons)
         change = RemoveObject(value=Person(id='P:002'))
         r = self.patcher.apply(change, dataset)
         print(yaml_dumper.dumps(dataset))
-        self.assertEqual(len(dataset.persons), 1)
+        self.assertEqual(len(dataset.persons), n_persons-1)
         self.assertEqual(dataset.persons[0].id, 'P:001')
 
     def test_add_remove(self):
@@ -139,6 +142,7 @@ class ChangerCommonTests:
         patcher = self.patcher
         dataset = yaml_loader.load(DATA, target_class=Dataset)
         dataset: Dataset
+        n_persons = len(dataset.persons)
         frel = FamilialRelationship(related_to='P:001', type='SIBLING_OF')
         person = Person(id='P:222', name='foo',
                         has_familial_relationships=[frel])
@@ -147,6 +151,10 @@ class ChangerCommonTests:
         patcher.apply(change, dataset)
         logging.info(dataset)
         logging.info(yaml_dumper.dumps(dataset))
-        assert len(dataset.persons) == 3
-        assert dataset.persons[2].id == 'P:222'
-        assert dataset.persons[2].has_familial_relationships[0].related_to == 'P:001'
+        assert len(dataset.persons) == n_persons + 1
+        ok = False
+        for p in dataset.persons:
+            if p.id == 'P:222':
+                assert p.has_familial_relationships[0].related_to == 'P:001'
+                ok = True
+        assert ok

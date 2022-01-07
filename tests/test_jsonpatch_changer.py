@@ -41,6 +41,8 @@ class JsonPatchMakerCommonTests(unittest.TestCase, ChangerCommonTests):
         view = SchemaView(SCHEMA)
         self.patcher = JsonPatchChanger(schemaview=view)
 
+    def test_add(self):
+        self._test_add()
 
     def test_make_jsonpatch(self):
         patcher = self.patcher
