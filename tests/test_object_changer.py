@@ -48,11 +48,12 @@ class ObjectChangerTestCase(unittest.TestCase, ChangerCommonTests):
         view = SchemaView(SCHEMA)
         patcher = ObjectChanger(schemaview=view)
         dataset = yaml_loader.load(DATA, target_class=Dataset)
+        n_persons = len(dataset.persons)
         dataset: Dataset
         change = RemoveObject(value=Person(id='P:002'))
         r = patcher.apply(change, dataset)
         print(yaml_dumper.dumps(dataset))
-        self.assertEqual(len(dataset.persons), 1)
+        self.assertEqual(len(dataset.persons), n_persons-1)
         self.assertEqual(dataset.persons[0].id, 'P:001')
 
     def test_duplicate_primary_key(self):
