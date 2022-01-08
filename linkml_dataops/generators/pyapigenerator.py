@@ -18,10 +18,10 @@ from linkml_runtime_api.apiroot import ApiRoot
 jinja2_template = """
 import logging
 from dataclasses import dataclass
-from linkml_runtime_api.query.queryengine import QueryEngine
-from linkml_runtime_api.query.query_model import FetchQuery, Constraint, MatchConstraint, OrConstraint, AbstractQuery, \
+from linkml_dataops.query.queryengine import QueryEngine
+from linkml_dataops.query.query_model import FetchQuery, Constraint, MatchConstraint, OrConstraint, AbstractQuery, \
     FetchById
-from linkml_runtime_api.query.queryengine import MatchExpression
+from linkml_dataops.query.queryengine import MatchExpression
 
 from {{ datamodel_package_full}} import *
 
