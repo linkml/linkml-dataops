@@ -1,8 +1,6 @@
-# linkml-runtime-api
+# linkml-dataops
 
 An extension to linkml-runtime to provide an API over runtime data objects.
-
-Documentation will later be added in the main [linkml](https://linkml.io/linkml/) repo
 
 This provides data models for CRUD (Create, Read, Update, Delete) objects, i.e.
 
@@ -18,11 +16,11 @@ Current engines implemented here:
 
 Other engines may be implemented elsewhere - e.g. linkml-solr
 
-See [tests/](https://github.com/linkml/linkml-runtime-api/tree/main/tests) for examples
+See [tests/](https://github.com/linkml/linkml-dataops/tree/main/tests) for examples
 
 ## Changes Datamodel
 
-See linkml_runtime_api.changes
+See linkml_dataops.changes
 
 Change classes include:
 
@@ -67,7 +65,7 @@ In future there will be other datastores
 
 ## Query Datamodel
 
-See linkml_runtime_api.query
+See linkml_dataops.query
 
 The main query class is `FetchQuery`
 
