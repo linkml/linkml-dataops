@@ -1,7 +1,7 @@
 from copy import copy, deepcopy
 
-from linkml_runtime_api.changer.changer import Changer, ChangeResult
-from linkml_runtime_api.changer.changes_model import Change, AddObject, RemoveObject, Append, Rename
+from linkml_dataops.changer.changer import Changer, ChangeResult
+from linkml_dataops.changer.changes_model import Change, AddObject, RemoveObject, Append, Rename
 from linkml_runtime.utils.formatutils import underscore
 from linkml_runtime.utils.yamlutils import YAMLRoot
 

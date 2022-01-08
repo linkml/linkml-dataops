@@ -17,11 +17,11 @@ from linkml_runtime.utils.compile_python import compile_python
 from linkml_runtime.utils.schemaview import SchemaView
 from ruamel.yaml import YAML
 
-from linkml_runtime_api.changer.changer import Changer, ChangeResult
-from linkml_runtime_api.changer.changes_model import Change, AddObject, RemoveObject, Append, Rename
+from linkml_dataops.changer.changer import Changer, ChangeResult
+from linkml_dataops.changer.changes_model import Change, AddObject, RemoveObject, Append, Rename
 from linkml_runtime.utils.formatutils import underscore, is_empty
 from linkml_runtime.utils.yamlutils import YAMLRoot, as_json_object
-from linkml_runtime_api.diffs.yaml_patch import YAMLPatch
+from linkml_dataops.diffs.yaml_patch import YAMLPatch
 
 OPDICT = Dict[str, Any]
 OPS = List[OPDICT]

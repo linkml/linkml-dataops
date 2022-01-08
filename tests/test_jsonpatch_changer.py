@@ -9,8 +9,8 @@ from linkml_runtime.dumpers import yaml_dumper, json_dumper
 from linkml_runtime.utils.schemaview import SchemaView
 from linkml_runtime.utils.yamlutils import YAMLRoot
 
-from linkml_runtime_api.changer.jsonpatch_changer import JsonPatchChanger
-from linkml_runtime_api.changer.changes_model import AddObject, RemoveObject, Append, Rename
+from linkml_dataops.changer.jsonpatch_changer import JsonPatchChanger
+from linkml_dataops.changer.changes_model import AddObject, RemoveObject, Append, Rename
 
 from tests.model.kitchen_sink import Person, Dataset, FamilialRelationship
 from tests import MODEL_DIR, INPUT_DIR, OUTPUT_DIR

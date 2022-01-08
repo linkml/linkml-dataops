@@ -3,8 +3,8 @@ import unittest
 
 from linkml_runtime.linkml_model import SchemaDefinition, ClassDefinition, SlotDefinition
 from linkml_runtime.dumpers import yaml_dumper
-from linkml_runtime_api.changer.object_changer import ObjectChanger
-from linkml_runtime_api.changer.changes_model import AddObject, RemoveObject, Append
+from linkml_dataops.changer.object_changer import ObjectChanger
+from linkml_dataops.changer.changes_model import AddObject, RemoveObject, Append
 
 class ObjectPatcherTestCase(unittest.TestCase):
 

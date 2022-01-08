@@ -3,8 +3,8 @@ import os
 import unittest
 
 from linkml_runtime.dumpers import yaml_dumper
-from linkml_runtime_api.generators.apigenerator import ApiGenerator
-from linkml_runtime_api.changer.changes_model import AddObject, RemoveObject, Append, Rename
+from linkml_dataops.generators.apigenerator import ApiGenerator
+from linkml_dataops.changer.changes_model import AddObject, RemoveObject, Append, Rename
 from linkml_runtime.loaders import yaml_loader
 from linkml_runtime.utils.schemaview import SchemaView
 from tests.model.kitchen_sink import Person, Dataset, FamilialRelationship

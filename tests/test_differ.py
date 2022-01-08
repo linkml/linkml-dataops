@@ -2,9 +2,9 @@ import os
 import unittest
 import logging
 
-from linkml_runtime_api.changer.object_changer import ObjectChanger
-from linkml_runtime_api.changer.changes_model import Rename
-from linkml_runtime_api.diffs.differ import DiffEngine
+from linkml_dataops.changer.object_changer import ObjectChanger
+from linkml_dataops.changer.changes_model import Rename
+from linkml_dataops.diffs.differ import DiffEngine
 from linkml_runtime.loaders import yaml_loader
 from linkml_runtime.utils.schemaview import SchemaView
 from tests.model.kitchen_sink import Dataset

@@ -5,12 +5,12 @@ import unittest
 from linkml_runtime.dumpers import yaml_dumper
 from linkml_runtime.utils.compile_python import compile_python
 
-from linkml_runtime_api import ObjectQueryEngine
-from linkml_runtime_api.generators import PythonApiGenerator
+from linkml_dataops import ObjectQueryEngine
+from linkml_dataops.generators import PythonApiGenerator
 from linkml_runtime.loaders import yaml_loader
 from linkml_runtime.utils.schemaview import SchemaView
 
-from linkml_runtime_api.query.queryengine import Database, MatchExpression
+from linkml_dataops.query.queryengine import Database, MatchExpression
 from tests.model.kitchen_sink import Person, Dataset, FamilialRelationship
 from tests import MODEL_DIR, INPUT_DIR, OUTPUT_DIR
 

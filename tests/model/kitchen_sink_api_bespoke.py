@@ -1,8 +1,8 @@
 import logging
 from dataclasses import dataclass
-from linkml_runtime_api.query.query_model import FetchQuery, Constraint, MatchConstraint, OrConstraint, AbstractQuery, \
+from linkml_dataops.query.query_model import FetchQuery, Constraint, MatchConstraint, OrConstraint, AbstractQuery, \
     FetchById
-from linkml_runtime_api.query.queryengine import MatchExpression, QueryEngine
+from linkml_dataops.query.queryengine import MatchExpression, QueryEngine
 
 from tests.model.kitchen_sink import *
 

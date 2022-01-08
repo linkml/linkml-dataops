@@ -9,7 +9,7 @@ import yaml
 from linkml_runtime.utils.formatutils import camelcase, underscore
 from linkml_runtime.utils.schemaview import SchemaView
 
-from linkml_runtime_api.apiroot import ApiRoot
+from linkml_dataops.apiroot import ApiRoot
 
 @dataclass
 class ApiGenerator(ApiRoot):

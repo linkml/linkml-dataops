@@ -4,9 +4,9 @@ import unittest
 from typing import List
 
 from linkml_runtime.loaders import yaml_loader
-from linkml_runtime_api.query.object_queryengine import ObjectQueryEngine
-from linkml_runtime_api.query.queryengine import Database, MatchExpression
-from linkml_runtime_api.query.query_model import FetchQuery, MatchConstraint, OrConstraint, FetchById
+from linkml_dataops.query.object_queryengine import ObjectQueryEngine
+from linkml_dataops.query.queryengine import Database, MatchExpression
+from linkml_dataops.query.query_model import FetchQuery, MatchConstraint, OrConstraint, FetchById
 from linkml_runtime.utils.schemaview import SchemaView
 from tests.model.kitchen_sink import Person, Dataset
 from tests.model.kitchen_sink_api import PersonQuery, PersonFetchById
