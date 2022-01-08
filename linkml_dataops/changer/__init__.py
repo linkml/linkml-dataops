@@ -1,2 +1,2 @@
-from linkml_runtime_api.changer.object_changer import ObjectChanger
-from linkml_runtime_api.changer.jsonpatch_changer import JsonPatchChanger
+from linkml_dataops.changer.object_changer import ObjectChanger
+from linkml_dataops.changer.jsonpatch_changer import JsonPatchChanger

@@ -1,2 +1,2 @@
-from linkml_runtime_api.generators.apigenerator import ApiGenerator
-from linkml_runtime_api.generators.pyapigenerator import PythonApiGenerator
+from linkml_dataops.generators.apigenerator import ApiGenerator
+from linkml_dataops.generators.pyapigenerator import PythonApiGenerator

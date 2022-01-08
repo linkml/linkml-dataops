@@ -6,11 +6,11 @@ from typing import Any, List
 
 from linkml_runtime.utils.formatutils import camelcase, underscore
 
-from linkml_runtime_api.query.query_model import FetchQuery, Constraint, MatchConstraint, OrConstraint, AbstractQuery, \
+from linkml_dataops.query.query_model import FetchQuery, Constraint, MatchConstraint, OrConstraint, AbstractQuery, \
     FetchById
 from linkml_runtime.utils.yamlutils import YAMLRoot
 
-from linkml_runtime_api.query.queryengine import QueryEngine, create_match_constraint
+from linkml_dataops.query.queryengine import QueryEngine, create_match_constraint
 
 
 def like(x: Any, y: Any) -> bool:

@@ -6,7 +6,7 @@ from jsonpatch import JsonPatch
 
 from linkml_runtime.dumpers import json_dumper
 
-from linkml_runtime_api.apiroot import ApiRoot
+from linkml_dataops.apiroot import ApiRoot
 from linkml_runtime.utils.yamlutils import YAMLRoot
 
 def _as_dict(obj: YAMLRoot) -> dict:

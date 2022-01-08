@@ -1,1 +1,1 @@
-from linkml_runtime_api.query.object_queryengine import ObjectQueryEngine
+from linkml_dataops.query.object_queryengine import ObjectQueryEngine

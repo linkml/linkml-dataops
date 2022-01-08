@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 
 from linkml_runtime.utils.formatutils import underscore
 
-from linkml_runtime_api.apiroot import ApiRoot, PATH_EXPRESSION
-from linkml_runtime_api.changer.changes_model import Change, AddObject, RemoveObject
+from linkml_dataops.apiroot import ApiRoot, PATH_EXPRESSION
+from linkml_dataops.changer.changes_model import Change, AddObject, RemoveObject
 from linkml_runtime.utils.yamlutils import YAMLRoot
 
 @dataclass

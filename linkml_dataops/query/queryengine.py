@@ -5,8 +5,8 @@ from typing import Any, List
 
 from linkml_runtime.utils.formatutils import camelcase, underscore
 
-from linkml_runtime_api.apiroot import ApiRoot, Database
-from linkml_runtime_api.query.query_model import FetchQuery, Constraint, MatchConstraint, OrConstraint, AbstractQuery, \
+from linkml_dataops.apiroot import ApiRoot, Database
+from linkml_dataops.query.query_model import FetchQuery, Constraint, MatchConstraint, OrConstraint, AbstractQuery, \
     FetchById
 from linkml_runtime.utils.yamlutils import YAMLRoot
 
