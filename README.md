@@ -106,7 +106,7 @@ In future there will be other datastores implemented (Solr, SQL, SPARQL, ...)
 The above examples use *generic* CRUD datamodels that can be used with any data models. You can also generate *specific CRUD datamodels* for your main domain datamodel.
 
 ```bash
-gen-python-api kitchen_sink.yaml > kitchen_sink_crud.yaml
+gen-crud-datamodel kitchen_sink.yaml > kitchen_sink_crud.yaml
 ```
 
 This will generate a LinkML database that represents CRUD operations on your schema

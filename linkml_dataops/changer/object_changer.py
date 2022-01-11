@@ -1,7 +1,7 @@
 from copy import copy, deepcopy
 
 from linkml_dataops.changer.changer import Changer, ChangeResult
-from linkml_dataops.changer.changes_model import Change, AddObject, RemoveObject, Append, Rename
+from linkml_dataops.changer.changes_model import Change, Append, AddObject, RemoveObject, Rename, SetValue
 from linkml_runtime.utils.formatutils import underscore
 from linkml_runtime.utils.yamlutils import YAMLRoot
 
@@ -12,7 +12,7 @@ class ObjectChanger(Changer):
     A :class:`Changer` that operates over an in-memory object tree
     """
 
-    def apply(self, change: Change, element: YAMLRoot, in_place=True) -> ChangeResult:
+    def apply(self, change: Change, element: YAMLRoot = None, in_place=True) -> ChangeResult:
         """
         Apply a change directly to an element in an in-memory object tree
 
@@ -24,6 +24,10 @@ class ObjectChanger(Changer):
         :return:
         """
         change = self._map_change_object(change)
+        if element is None:
+            element = change.parent
+        if element is None:
+            raise ValueError(f'Must pass either element arg, or parent in change object must be set')
         if not in_place:
             element = deepcopy(element)
         if isinstance(change, AddObject):
@@ -32,26 +36,31 @@ class ObjectChanger(Changer):
             return self.remove_object(change, element)
         elif isinstance(change, Append):
             return self.append_value(change, element)
+        elif isinstance(change, SetValue):
+            return self.set_value(change, element)
         elif isinstance(change, Rename):
             return self.rename(change, element)
         else:
             raise Exception(f'Unknown type {type(change)} for {change}')
 
-    # NOTE: changes in place
+
     def add_object(self, change: AddObject, element: YAMLRoot) -> ChangeResult:
         place = self._locate_object(change, element)
-        pk_slot = self._get_primary_key(change)
-        pk_val = getattr(change.value, pk_slot)
         if isinstance(place, dict):
+            pk_slot = self._get_primary_key_slot(change)
+            pk_val = getattr(change.value, pk_slot)
             place[pk_val] = change.value
         elif isinstance(place, list):
             place.append(change.value)
         else:
-            raise Exception(f'place {place} cannot be added to')
+            change = deepcopy(change)
+            path_toks = change.path.split('/')
+            change.path = '/'.join(path_toks[:-1])
+            place = self._locate_object(change, element)
+            setattr(place, path_toks[-1], change.value)
         return ChangeResult(object=element)
 
 
-    # NOTE: changes in place
     def remove_object(self, change: RemoveObject, element: YAMLRoot) -> ChangeResult:
         place = self._locate_object(change, element)
         if isinstance(change.value, str):
@@ -63,7 +72,7 @@ class ObjectChanger(Changer):
             if change.value in place:
                 ix = place.index(change.value)
             if ix is None:
-                pk = self._get_primary_key(change)
+                pk = self._get_primary_key_slot(change)
                 if pk:
                     for i in range(0,len(place)):
                         if getattr(place[i], pk) == v:
@@ -75,8 +84,14 @@ class ObjectChanger(Changer):
             #if change.value not in place:
             #    raise Exception(f'value {v} not in list: {place}')
             #place.remove(change.value)
-        else:
+        elif isinstance(place, dict):
             del place[v]
+        else:
+            change = deepcopy(change)
+            path_toks = change.path.split('/')
+            change.path = '/'.join(path_toks[:-1])
+            place = self._locate_object(change, element)
+            delattr(place, path_toks[-1])
         return ChangeResult(object=element)
 
     # NOTE: changes in place
@@ -85,17 +100,21 @@ class ObjectChanger(Changer):
         place.append(change.value)
         return ChangeResult(object=element)
 
-    # NOTE: changes in place
-    def rename(self, change: Rename, element: YAMLRoot) -> ChangeResult:
-        element = self._rename(change, element)
+    def set_value(self, change: SetValue, element: YAMLRoot) -> ChangeResult:
+        place, slot_name = self._locate_object_slot(change, element)
+        setattr(place, slot_name, change.value)
         return ChangeResult(object=element)
 
-    def _rename(self, change: Rename, element: YAMLRoot) -> YAMLRoot:
+    # NOTE: changes in place
+    def rename(self, change: Rename, element: YAMLRoot) -> ChangeResult:
+        element = self._apply_rename(change, element)
+        return ChangeResult(object=element)
+
+    def _apply_rename(self, change: Rename, element: YAMLRoot) -> YAMLRoot:
         sv = self.schemaview
         if not isinstance(element, YAMLRoot):
             return element
         cn = type(element).class_name
-        #print(f'CN={cn}')
         if cn == change.target_class:
             pk = sv.get_identifier_slot(change.target_class)
             if pk is not None:
@@ -121,18 +140,18 @@ class ObjectChanger(Changer):
             if isinstance(v, list):
                 if is_replace:
                     v = [replace(v1) for v1 in v]
-                v = [self._rename(change, v1) for v1 in v]
+                v = [self._apply_rename(change, v1) for v1 in v]
             elif isinstance(v, dict):
                 if is_replace:
                     if change.old_value in v:
                         v[change.value] = v[change.old_value]
                         del v[change.old_value]
-                v = {k: self._rename(change, v1) for k, v1 in v.items()}
+                v = {k: self._apply_rename(change, v1) for k, v1 in v.items()}
             elif isinstance(v, str):
                 if is_replace:
                     v = replace(v)
             else:
-                v = self._rename(change, v)
+                v = self._apply_rename(change, v)
             setattr(element, k, v)
         return element
 

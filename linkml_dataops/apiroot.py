@@ -1,6 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 from linkml_runtime.utils.schemaview import SchemaView
 from linkml_runtime.utils.yamlutils import YAMLRoot
@@ -58,11 +58,14 @@ class ApiRoot(ABC):
         if isinstance(element, dict):
             new_element = element[selector]
         elif isinstance(element, list):
-            for x in element:
-                x_id = self._get_primary_key_value_for_element(x)
-                if selector == x_id:
-                    new_element = x
-                    break
+            if selector.isdigit():
+                new_element = element[int(selector)]
+            else:
+                for x in element:
+                    x_id = self._get_primary_key_value_for_element(x)
+                    if selector == x_id:
+                        new_element = x
+                        break
             if new_element is None:
                 raise Exception(f'Could not find {selector} in list {element}')
         else:
@@ -109,7 +112,7 @@ class ApiRoot(ABC):
         for p in self._yield_path(new_path, new_element):
             yield p
 
-    def _get_primary_key_value_for_element(self, element: YAMLRoot) -> str:
+    def _get_primary_key_value_for_element(self, element: YAMLRoot) -> Optional[str]:
         """
         value of the slot that is assigned as identifier for the class that element instantiates
 
@@ -120,7 +123,10 @@ class ApiRoot(ABC):
         if cn is None:
             raise Exception(f'Could not determine LinkML class name from {change.value}')
         pk = self.schemaview.get_identifier_slot(cn)
-        return getattr(element, pk.name)
+        if pk:
+            return getattr(element, pk.name)
+        else:
+            return None
 
     def _get_top_level_classes(self, container_class=None):
         sv = self.schemaview

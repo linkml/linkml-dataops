@@ -7,7 +7,6 @@ import json
 
 import click
 import yaml
-from jsonasobj2 import items, is_list, is_dict, JsonObj
 from jsonpatch import JsonPatch
 
 from linkml_runtime.dumpers import json_dumper
@@ -15,69 +14,25 @@ from linkml_runtime.linkml_model import ClassDefinitionName
 from linkml_runtime.loaders import json_loader, yaml_loader
 from linkml_runtime.utils.compile_python import compile_python
 from linkml_runtime.utils.schemaview import SchemaView
-from ruamel.yaml import YAML
 
 from linkml_dataops.changer.changer import Changer, ChangeResult
 from linkml_dataops.changer.changes_model import Change, AddObject, RemoveObject, Append, Rename
-from linkml_runtime.utils.formatutils import underscore, is_empty
-from linkml_runtime.utils.yamlutils import YAMLRoot, as_json_object
+from linkml_runtime.utils.formatutils import underscore
+from linkml_runtime.utils.yamlutils import YAMLRoot
+
+from linkml_dataops.changer.obj_utils import element_to_dict
 from linkml_dataops.diffs.yaml_patch import YAMLPatch
 
 OPDICT = Dict[str, Any]
 OPS = List[OPDICT]
 
-# this is a copy-and-edit of remove_empty_items in formatutils
-# TODO: rewrite this
-def to_object(obj: Any, hide_protected_keys: bool = False, inside: bool = False) -> Any:
-    """
-    Recursively iterate over obj translating to dicts for json
-
-
-    :param obj: Object to be tweaked
-    :param hide_protected_keys: True means remove keys that begin with an underscore
-    :param inside: Keep from removing the outermost container
-    :return: copy of obj with empty items removed or None if obj itself is "empty"
-    """
-    #print(f'T {type(obj)} // {obj} // {isinstance(obj, JsonObj)}')
-    #print(f'I {items(obj)}')
-    if is_list(obj):
-        # for discussion of logic, see: https://github.com/linkml/linkml-runtime/issues/42
-        obj_list = [e for e in [to_object(l, hide_protected_keys=hide_protected_keys, inside=True)
-                                for l in obj if l != '_root']]
-        return obj_list if not inside or not is_empty(obj_list) else []
-    elif is_dict(obj):
-        obj_dict = {k: v for k, v in [(k2, to_object(v2, hide_protected_keys=hide_protected_keys, inside=True))
-                                      for k2, v2 in items(obj)]}
-
-        # https://github.com/linkml/linkml/issues/119
-        # Remove the additional level of nesting with enums
-        if len(obj_dict) == 1 and list(obj_dict.keys())[0] == '_code':
-            enum_text = list(obj_dict.values())[0].get('text', None)
-            if enum_text is not None:
-                return enum_text
-        if hide_protected_keys and len(obj_dict) == 1 and str(list(obj_dict.keys())[0]).startswith('_'):
-            inner_element = list(obj_dict.values())[0]
-            if isinstance(inner_element, dict):
-                obj_dict = inner_element
-        return obj_dict if not inside or not is_empty(obj_dict) else None
-    #elif is_empty(obj):
-    #    return None
-    else:
-        return obj
-
-def _element_to_dict(element: YAMLRoot) -> dict:
-    #jsonstr = json_dumper.dumps(element, inject_type=False)
-    jsonstr = json.dumps(as_json_object(element, None, inject_type=False),
-                         default=lambda o: to_object(o, hide_protected_keys=True) if isinstance(o, YAMLRoot) else json.JSONDecoder().decode(o),
-                         indent='  ')
-    return json.loads(jsonstr)
 
 class JsonPatchChanger(Changer):
     """
-    A :class:`Patcher` that works by first creating :class:`JsonPath` objects, then applying them
+    A :class:`Changer` that works by first creating :class:`JsonPatch` objects, then applying them
     """
 
-    def apply(self, change: Change, element: YAMLRoot, in_place=True) -> ChangeResult:
+    def apply(self, change: Change, element: YAMLRoot = None, in_place=True) -> ChangeResult:
         """
         Generates a JsonPatch and then applies it
 
@@ -88,12 +43,14 @@ class JsonPatchChanger(Changer):
         :param in_place:
         :return:
         """
+        if element is None:
+            element = change.parent
+        if element is None:
+            raise ValueError(f'Must pass either element arg, or parent in change object must be set')
         change = self._map_change_object(change)
         patch_ops = self.make_patch(change, element)
         patch = JsonPatch(patch_ops)
-        logging.info(f'Patch = {patch_ops}')
-        element_dict = _element_to_dict(element)
-        print(f'DICT={element_dict}')
+        element_dict = element_to_dict(element)
         result = patch.apply(element_dict)
         typ = type(element)
         jsonstr = json_dumper.dumps(result, inject_type=False)
@@ -121,7 +78,7 @@ class JsonPatchChanger(Changer):
             results.append(self.apply(change, element, in_place=True))
         return results
 
-    def _value(self, change: Change):
+    def _change_value_as_dict(self, change: Change) -> Dict[str, Any]:
         # TODO: move this functionality into json_dumper
         return json.loads(json_dumper.dumps(change.value, inject_type=False))
 
@@ -130,7 +87,7 @@ class JsonPatchChanger(Changer):
         Generates a list of JsonPatch objects from a Change
 
         These can then be directly applied, or applied later out of band,
-        e.g. using :meth:`JsonPath.apply`
+        e.g. using :meth:`JsonPatch.apply`
 
         :param change:
         :param element:
@@ -149,11 +106,18 @@ class JsonPatchChanger(Changer):
             raise Exception(f'Unknown type {type(change)} for {change}')
 
     def make_add_object_patch(self, change: AddObject, element: YAMLRoot) -> OPS:
+        """
+        Translate an :class:`AddObject` change to JSON Patch objects
+
+        :param change:
+        :param element:
+        :return:
+        """
         path = self._get_jsonpath(change, element)
         place = self._locate_object(change, element)
-        pk_slot = self._get_primary_key(change)
+        pk_slot = self._get_primary_key_slot(change)
         pk_val = getattr(change.value, pk_slot)
-        v = self._value(change)
+        v = self._change_value_as_dict(change)
         op = dict(op='add', value=v)
         if isinstance(place, dict):
             op['path'] = f'{path}/pk_val'
@@ -164,6 +128,13 @@ class JsonPatchChanger(Changer):
         return [op]
 
     def make_remove_object_patch(self, change: RemoveObject, element: YAMLRoot) -> OPS:
+        """
+        Translate an :class:`RemoveObject` change to JSON Patch objects
+
+        :param change:
+        :param element:
+        :return:
+        """
         place = self._locate_object(change, element)
         path = self._get_jsonpath(change, element)
         op = dict(op='remove')
@@ -176,7 +147,7 @@ class JsonPatchChanger(Changer):
             if change.value in place:
                 ix = place.index(change.value)
             if ix is None:
-                pk = self._get_primary_key(change)
+                pk = self._get_primary_key_slot(change)
                 if pk:
                     for i in range(0,len(place)):
                         if getattr(place[i], pk) == v:
@@ -191,7 +162,7 @@ class JsonPatchChanger(Changer):
 
     def make_append_patch(self, change: Append, element: YAMLRoot) -> OPS:
         """
-        Apply an :class:`Append` change
+        Translate an :class:`Append` change to JSON Patch objects
 
         :param change:
         :param element:
@@ -201,7 +172,7 @@ class JsonPatchChanger(Changer):
         place = self._locate_object(change, element)
         if not isinstance(place, list):
             raise Exception(f'Expected list got {place}')
-        v = self._value(change)
+        v = self._change_value_as_dict(change)
         n = len(place)
         if n == 0:
             op = dict(op='add', value=[v], path=path)
@@ -211,7 +182,7 @@ class JsonPatchChanger(Changer):
 
     def make_rename_patch(self, change: Rename, element: YAMLRoot) -> OPS:
         """
-        Apply a Rename change
+        Translate an :class:`Rename` change to JSON Patch objects
 
         :param change:
         :param element:
@@ -275,7 +246,19 @@ class JsonPatchChanger(Changer):
 
     def patch_file(self, input_file: Union[str, IO[str]], changes: List[Change],
                    target_class: Type[YAMLRoot],
-                   format: str = None, out_stream=None):
+                   format: str = None, out_stream=None) -> None:
+        """
+        Apply a list of changes to a yaml or json file
+
+        If the input is yaml, then comments will be preserved
+
+        :param input_file: input filename or stream
+        :param changes:
+        :param target_class: root
+        :param format: yaml or json
+        :param out_stream:
+        :return:
+        """
         if format is None:
             if out_stream is not None:
                 if isinstance(out_stream, str) and '.' in out_stream:
@@ -404,7 +387,6 @@ def cli(inputfile, format: str, module, schema: str, change_file: str, add: List
         changes.append(change)
     #append_change('RemoveObject', remove)
     logging.info(f'CHANGES: {changes}')
-    print(f'CHANGES: {changes}')
     patcher.patch_file(inputfile, changes, target_class=py_target_class, format=format, out_stream=output)
 
 

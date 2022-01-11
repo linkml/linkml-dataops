@@ -1,3 +1,4 @@
+import logging
 import sys
 from contextlib import redirect_stdout
 
@@ -28,7 +29,7 @@ class YAMLPatch:
             obj = yaml.load(instream)
         for patch in patches:
             if isinstance(patch, dict):
-                print(f' PATCH={patch}')
+                logging.debug(f' PATCH={patch}')
                 patch = JsonPatch([patch])
             obj = patch.apply(obj)
         if isinstance(outstream, str):

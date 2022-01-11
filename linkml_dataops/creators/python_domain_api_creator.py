@@ -15,7 +15,6 @@ from linkml_runtime.utils.schemaview import SchemaView
 
 from linkml_dataops.apiroot import ApiRoot
 
-# TODO
 jinja2_template = """
 import logging
 from dataclasses import dataclass
@@ -71,7 +70,7 @@ class {{ api_name }}:
 """
 
 @dataclass
-class PythonApiGenerator(ApiRoot):
+class PythonDomainApiCreator(ApiRoot):
     """
     Generates source for a Python API
 
@@ -127,7 +126,7 @@ class PythonApiGenerator(ApiRoot):
 def cli(schema,  **args):
     """ Generate API """
     sv = SchemaView(schema)
-    gen = PythonApiGenerator(schemaview=sv)
+    gen = PythonDomainApiCreator(schemaview=sv)
     print(gen.serialize(**args))
 
 

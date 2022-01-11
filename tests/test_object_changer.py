@@ -10,7 +10,7 @@ from linkml_runtime.utils.schemaview import SchemaView
 from tests.model.kitchen_sink import Person, Dataset, FamilialRelationship
 from tests.model.kitchen_sink_api import AddPerson
 from tests import MODEL_DIR, INPUT_DIR
-from tests.test_changer_common import ChangerCommonTests
+from tests.common_tests import ChangerCommonTests
 
 SCHEMA = os.path.join(MODEL_DIR, 'kitchen_sink.yaml')
 DATA = os.path.join(INPUT_DIR, 'kitchen_sink_inst_01.yaml')
@@ -27,18 +27,45 @@ value:
       is_current: true
 """
 
-class ObjectChangerTestCase(unittest.TestCase, ChangerCommonTests):
+class ObjectChangerTestCase(unittest.TestCase):
     """
     Tests in-memory object changer
+
+    .. note::
+
+       this test also runs all tests in ChangerCommonTests
     """
 
     def setUp(self):
         view = SchemaView(SCHEMA)
         self.patcher = ObjectChanger(schemaview=view)
-
+        self.common = ChangerCommonTests(patcher=self.patcher, parent=self)
 
     def test_add(self):
-        self._test_add()
+        self.common.add_top_level_test()
+        self.common.add_atomic_value_test()
+
+    def test_remove(self):
+        self.common.remove_object_test()
+        self.common.remove_atomic_value()
+
+    def test_add_remove(self):
+        self.common.add_then_remove_test()
+
+    def test_append_value(self):
+        self.common.append_scalar_value_test()
+
+    def test_append_object(self):
+        self.common.append_object_test()
+
+    def test_rename(self):
+        self.common.rename_test()
+
+    def test_from_empty(self):
+        self.common.add_from_empty_test()
+
+    def test_domain_api(self):
+        self.common.domain_api_test()
 
     @unittest.skip
     def test_set_value(self):
@@ -54,7 +81,7 @@ class ObjectChangerTestCase(unittest.TestCase, ChangerCommonTests):
         dataset: Dataset
         change = RemoveObject(value=Person(id='P:002'))
         r = patcher.apply(change, dataset)
-        print(yaml_dumper.dumps(dataset))
+        logging.info(yaml_dumper.dumps(dataset))
         self.assertEqual(len(dataset.persons), n_persons-1)
         self.assertEqual(dataset.persons[0].id, 'P:001')
 
@@ -69,8 +96,8 @@ class ObjectChangerTestCase(unittest.TestCase, ChangerCommonTests):
         patcher.apply(AddObject(value=Person(id='P1', name='p2')), dataset)
         assert dataset.persons[0].id == 'P1'
         self.assertEqual(len(dataset.persons), 2)
-        print(dataset.persons[0])
-        print(dataset.persons[1])
+        logging.info(dataset.persons[0])
+        logging.info(dataset.persons[1])
         patcher.apply(RemoveObject(value=Person(id='P1')), dataset)
         self.assertEqual(len(dataset.persons), 1)
 
@@ -81,10 +108,10 @@ class ObjectChangerTestCase(unittest.TestCase, ChangerCommonTests):
         person = Person('P:1')
         app = Append(value=FamilialRelationship(related_to='P:4', type='SIBLING_OF'))
         path = patcher._get_path(app, person)
-        #print(f'PATH={path}')
+        #logging.info(f'PATH={path}')
         self.assertEqual(path, '/has_familial_relationships')
         loc = patcher._locate_object(app, person)
-        #print(f'LOC={loc}')
+        #logging.info(f'LOC={loc}')
         self.assertEqual(loc, [])
         dataset = Dataset()
         patcher.apply(AddObject(value=person), dataset)

@@ -65,7 +65,7 @@ class ObjectQueryEngine(QueryEngine):
             element = self.database.data
         pk = None
         tc = query.target_class
-        for cn, c in self.schemaview.all_class().items():
+        for cn, c in self.schemaview.all_classes().items():
             if camelcase(cn) == camelcase(tc):
                 pk = self.schemaview.get_identifier_slot(cn)
                 break
@@ -148,7 +148,7 @@ class ObjectQueryEngine(QueryEngine):
             if sv is None:
                 raise Exception(f'Must pass path OR schemaview')
             paths = []
-            for cn, c in sv.all_class().items():
+            for cn, c in sv.all_classes().items():
                 for slot in sv.class_induced_slots(cn):
                     if slot.inlined and slot.range == target_cn:
                         k = underscore(slot.name)
