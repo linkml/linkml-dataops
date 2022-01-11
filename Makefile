@@ -12,3 +12,6 @@ prep_tests: tests/model/kitchen_sink_api.yaml
 %_api.py: %_api.yaml
 	gen-python --no-mergeimports $< > $@.tmp && mv $@.tmp $@
 
+%_model.py: %.yaml
+	$(RUN) gen-python --no-mergeimports $< > $@.tmp && mv $@.tmp $@
+

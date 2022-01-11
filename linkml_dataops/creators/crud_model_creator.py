@@ -12,7 +12,7 @@ from linkml_runtime.utils.schemaview import SchemaView
 from linkml_dataops.apiroot import ApiRoot
 
 @dataclass
-class ApiGenerator(ApiRoot):
+class CRUDModelCreator(ApiRoot):
     """
     Generates an CRUD datamodel from an existing Datamodel
 
@@ -35,6 +35,8 @@ class ApiGenerator(ApiRoot):
     These generated classes can be used to represent changes and queries respectively
 
     Instances of these objects can be used as currency in both changers and query engines respectively
+
+    Note this implements "duck typing" of the core generic change model
     """
 
     def serialize(self, container_class=None, prefix_uri=None, include_slots_as_params=False):
@@ -94,8 +96,14 @@ class ApiGenerator(ApiRoot):
                 "value": {
                     "inlined": True
                 },
+                "old_value": {
+                    "inlined": True
+                },
                 "path": {},
                 "constraints": {
+                    "range": "__Any"
+                },
+                "parent": {
                     "range": "__Any"
                 },
                 "id_value": {},
@@ -125,7 +133,7 @@ class ApiGenerator(ApiRoot):
                     }
                 }
                 classes[f'Remove{cn_camel}'] = {
-                    "description": f'A change action that remoaves a {cn_camel} to a database',
+                    "description": f'A change action that removes a {cn_camel} to a database',
                     "comments": copy(cmts),
                     "mixins": "LocalChange",
                     "slot_usage": {
@@ -135,6 +143,19 @@ class ApiGenerator(ApiRoot):
                         }
                     }
                 }
+                for slot in sv.class_induced_slots(cn):
+                    sn = underscore(slot.name)
+                    classes[f'Set{cn_camel}_{sn}'] = {
+                        "description": f'A change action that sets the value of {sn} in the context of {cn_camel}',
+                        "comments": copy(cmts),
+                        "mixins": "LocalChange",
+                        "slot_usage": {
+                            "value": {
+                                "range": cn,
+                                "inlined": True
+                            }
+                        }
+                    }
             if include_slots_as_params:
                 q_slot_names = slot_names
             else:
@@ -172,7 +193,7 @@ def cli(schema,  **args):
     These can be used with changer or query objects
     """
     sv = SchemaView(schema)
-    gen = ApiGenerator(schemaview=sv)
+    gen = CRUDModelCreator(schemaview=sv)
     print(gen.serialize(**args))
 
 

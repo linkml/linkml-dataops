@@ -1,9 +1,10 @@
+from copy import deepcopy
 from dataclasses import dataclass, field
 
 from linkml_runtime.utils.formatutils import underscore
 
 from linkml_dataops.apiroot import ApiRoot, PATH_EXPRESSION
-from linkml_dataops.changer.changes_model import Change, AddObject, RemoveObject
+from linkml_dataops.changer.changes_model import Change, AddObject, RemoveObject, Append
 from linkml_runtime.utils.yamlutils import YAMLRoot
 
 @dataclass
@@ -24,7 +25,7 @@ class Changer(ApiRoot):
     * :class:`JsonChanger` - operate via generating JSON Patches
     """
 
-    def apply(self, change: Change, element: YAMLRoot) -> ChangeResult:
+    def apply(self, change: Change, element: YAMLRoot = None) -> ChangeResult:
         """
         Apply a change object to the change engine
 
@@ -35,21 +36,32 @@ class Changer(ApiRoot):
         raise NotImplementedError(f'{self} must implement this method')
 
     def _map_change_object(self, change: YAMLRoot) -> Change:
+        """
+        maps a domain change object to a generic one
+
+        :param change:
+        :return:
+        """
         if isinstance(change, Change):
             return change
         cn = type(change).class_name
         for prefix, direct_cn in [('Add', AddObject),
+                                  ('Append', Append),
                                   ('Remove', RemoveObject)]:
             if cn.startswith(prefix):
                 new_change_obj = direct_cn()
                 new_change_obj.path = change.path
                 new_change_obj.value = change.value
+                #TODO: new_change_obj.parent = change.parent
                 return new_change_obj
         return None
 
 
     def _path_to_jsonpath(self, path: PATH_EXPRESSION, element: YAMLRoot) -> str:
+        # TODO: do not repeat code with parent
         toks = path.split('/')
+        #if not toks[0]:
+        #    toks = toks[1:]
         nu = []
         curr_el = element
         for selector in toks:
@@ -62,29 +74,52 @@ class Changer(ApiRoot):
                     new_element = curr_el[selector]
                     nxt = selector
                 elif isinstance(curr_el, list):
-                    i = 0
-                    for x in curr_el:
-                        x_id = self._get_primary_key_value_for_element(x)
-                        if selector == x_id:
-                            new_element = x
-                            nxt = str(i)
-                            break
-                        i += 1
+                    if selector.isdigit():
+                        new_element = curr_el[int(selector)]
+                    else:
+                        i = 0
+                        for x in curr_el:
+                            x_id = self._get_primary_key_value_for_element(x)
+                            if selector == x_id:
+                                new_element = x
+                                nxt = str(i)
+                                break
+                            i += 1
                     if new_element is None:
                         raise Exception(f'Could not find {selector} in list {element}')
                 else:
                     new_element = getattr(curr_el, selector)
                 curr_el = new_element
             nu.append(nxt)
-        return '/'.join(nu)
+        p = '/'.join(nu)
+        if not p.startswith('/'):
+            p = f'/{p}'
+        return p
 
     def _get_jsonpath(self, change: Change, element: YAMLRoot) -> str:
+        """
+        Find the json path for a change object:
+
+        1. if explicitly set, use this
+        2. otherwise, find using :ref:`_get_path`
+        :param change:
+        :param element:
+        :return:
+        """
         if change.path is not None:
             return self._path_to_jsonpath(change.path, element)
         else:
             return self._path_to_jsonpath(self._get_path(change, element), element)
 
     def _get_path(self, change: Change, element: YAMLRoot, strict=True) -> PATH_EXPRESSION:
+        """
+        Get the path for a change object, relative to element
+
+        :param change:
+        :param element:
+        :param strict:
+        :return:
+        """
         if change.path is not None:
             return change.path
         else:
@@ -114,6 +149,13 @@ class Changer(ApiRoot):
                 raise Exception(f'No matching top level slot')
 
     def _locate_object(self, change: Change, element: YAMLRoot) -> YAMLRoot:
+        """
+        resolves a change path
+
+        :param change:
+        :param element:
+        :return:
+        """
         if change.parent is not None:
             return change.parent
         else:
@@ -123,11 +165,18 @@ class Changer(ApiRoot):
             path = self._get_path(change, element)
             return self.select_path(path, element)
 
+    def _locate_object_slot(self, change: Change, element: YAMLRoot) -> (YAMLRoot, str):
+        change = deepcopy(change)
+        path_toks = change.path.split('/')
+        change.path = '/'.join(path_toks[:-1])
+        place = self._locate_object(change, element)
+        return (place, path_toks[-1])
+
     def _get_primary_key_value(self, change: Change) -> str:
-        pk_slot = self._get_primary_key(change)
+        pk_slot = self._get_primary_key_slot(change)
         return getattr(change.value, pk_slot)
 
-    def _get_primary_key(self, change: Change) -> str:
+    def _get_primary_key_slot(self, change: Change) -> str:
         """
         Gets the primary key slot for a change.
         If not explicitly set, this is the identifier slot for the valye

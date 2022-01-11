@@ -1,6 +1,6 @@
 id: https://w3id.org/linkml/changes
 title: LinkML Changes Datamodel
-name: linkml changes
+name: linkml_changes
 description: |-
   A generic datamodel for representing changes on objects
 
@@ -11,10 +11,11 @@ see_also:
 prefixes:
   linkml: https://w3id.org/linkml/
   jsonpatch: https://w3id.org/linkml/jsonpatch
+  changes: https://w3id.org/linkml/changes
   skos: http://www.w3.org/2004/02/skos/core#
   schema: http://schema.org/
 
-default_prefix: jsonpatch
+default_prefix: changes
 default_range: string
 
 default_curi_maps:
@@ -36,6 +37,8 @@ types:
     uri: xsd:string
     description: |-
       A path expression conformant to [rfc6901](https://datatracker.ietf.org/doc/html/rfc6901)
+    comments:
+      - Extension to rfc6901, with inlined lists of objects, these can always be referenced by primary key, whether inlined as list or not
     see_also:
       - https://datatracker.ietf.org/doc/html/rfc6901
 
@@ -49,14 +52,25 @@ slots:
     range: PathExpression
   value:
     description: |-
-      the main change body. For Add changes, this is the new object
+      the main change body. For Add changes, this is the new object. Values can also be scalar/atomic.
     range: ChangeTarget
+  old_value:
+    range: ChangeTarget
+  value_type:
+    range: uriorcurie
   parent:
     description: |-
       The object to which the change is being applied to
+    comments:
+      - this can typically be omitted and passed at the API level
     range: ChangeTarget
   primary_key_slot:
     range: string
+  has_part:
+    range: Change
+    multivalued: true
+  strict:
+    range: boolean
 
 #==================================
 # Classes                         #
@@ -81,7 +95,10 @@ classes:
       - path
       - parent
       - value
+      - value_type
+      - old_value
       - primary_key_slot
+      - strict
 
   AddObject:
     description: |-
@@ -104,6 +121,35 @@ classes:
         description: the object to which the new object is being removed from
       value:
         description: the object being removed. Can be an identifier or whole object
+      strict:
+        description: if true, then the object to be removed must be present
+
+  ReplaceObject:
+    aliases:
+      - remove and add
+    description: |-
+      A change object that represents the removal of an object from another object followed by an add
+    is_a: Change
+    slot_usage:
+      parent:
+        description: the object to which the new object is being replaced from
+      old_value:
+        description: the value of the object being replaced
+      value:
+        description: the new value
+
+  SetValue:
+    aliases:
+      - assign
+      - set
+      - let
+    description: |-
+      A change object that represents setting the value of a slot
+    is_a: Change
+
+  Append:
+    is_a: Change
+
 
   Rename:
     aliases:
@@ -123,24 +169,8 @@ classes:
         description: new primary key value
         range: string
 
-  SetValue:
-    aliases:
-      - assign
-      - set
-      - let
-    description: |-
-      A change object that represents setting the value of a slot
-    is_a: Change
-    abstract: true
 
-  SetAtomicValue:
-    is_a: SetValue
 
-  SetComplexValue:
-    is_a: SetValue
-
-  Append:
-    is_a: Change
 
 
 

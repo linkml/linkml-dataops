@@ -15,7 +15,7 @@ from linkml_dataops.changer.changes_model import AddObject, RemoveObject, Append
 from tests.model.kitchen_sink import Person, Dataset, FamilialRelationship
 from tests import MODEL_DIR, INPUT_DIR, OUTPUT_DIR
 from tests.model.kitchen_sink_api import AddPerson
-from tests.test_changer_common import ChangerCommonTests
+from tests.common_tests import ChangerCommonTests
 
 SCHEMA = os.path.join(MODEL_DIR, 'kitchen_sink.yaml')
 DATA = os.path.join(INPUT_DIR, 'kitchen_sink_inst_01.yaml')
@@ -27,7 +27,7 @@ def _roundtrip(element: YAMLRoot) -> dict:
     jsonstr = json_dumper.dumps(element, inject_type=False)
     return json_loader.loads(jsonstr, target_class=typ)
 
-class JsonPatchMakerCommonTests(unittest.TestCase, ChangerCommonTests):
+class JsonPatchMakerCommonTests(unittest.TestCase):
     """
     Tests JsonPatchChanger
 
@@ -35,14 +35,63 @@ class JsonPatchMakerCommonTests(unittest.TestCase, ChangerCommonTests):
 
     This patch can then be converted using any JSON-Patch supporting tool,
     including the Python implementation
+
+    .. note::
+
+       this test also runs all tests in :ref:`ChangerCommonTests`
     """
 
     def setUp(self):
         view = SchemaView(SCHEMA)
         self.patcher = JsonPatchChanger(schemaview=view)
+        self.common = ChangerCommonTests(patcher=self.patcher, parent=self)
 
     def test_add(self):
-        self._test_add()
+        self.common.add_top_level_test()
+
+    def test_remove(self):
+        self.common.remove_object_test()
+        #TODO
+        #self.common.remove_atomic_value()
+
+    @unittest.skip('TODO')
+    def test_add_remove(self):
+        self.common.add_then_remove_test()
+
+    @unittest.skip('TODO')
+    def test_append_value(self):
+        self.common.append_scalar_value_test()
+
+    def test_append_object(self):
+        self.common.append_object_test()
+
+    def test_rename(self):
+        self.common.rename_test()
+
+    def test_from_empty(self):
+        self.common.add_from_empty_test()
+
+    def test_domain_api(self):
+        self.common.domain_api_test()
+
+    def test_get_json_path(self):
+        """
+        tests conversion of paths to jsonpath syntax
+
+        See also :ref:`test_paths`
+        """
+        dataset = yaml_loader.load(DATA, target_class=Dataset)
+        patcher = self.patcher
+        path = patcher._path_to_jsonpath('/persons', dataset)
+        assert path == '/persons'
+        path = patcher._path_to_jsonpath('/persons/P:002', dataset)
+        assert path == '/persons/1'
+        path = patcher._path_to_jsonpath('/persons/P:002/has_employment_history', dataset)
+        #print(path)
+        assert path == '/persons/1/has_employment_history'
+        path = patcher._path_to_jsonpath('/persons/P:002/has_employment_history/0', dataset)
+        #print(path)
+        assert path == '/persons/1/has_employment_history/0'
 
     def test_make_jsonpatch(self):
         patcher = self.patcher
@@ -51,7 +100,7 @@ class JsonPatchMakerCommonTests(unittest.TestCase, ChangerCommonTests):
         # ADD OBJECT
         ch = AddObject(value=new_person)
         p = patcher.make_patch(ch, d)
-        print(f'P={p}')
+        logging.info(f'P={p}')
         result = patcher.apply(ch, d, in_place=True)
         #d = result.object
         logging.info(d)
@@ -90,20 +139,27 @@ class JsonPatchMakerCommonTests(unittest.TestCase, ChangerCommonTests):
         view = SchemaView(SCHEMA)
         patcher = JsonPatchChanger(schemaview=view)
         with open(DATA) as stream:
-            obj = yaml.load(stream)
+            obj = yaml.safe_load(stream)
         with open(DATA_AS_JSON, 'w') as stream:
             json.dump(obj, stream, indent=4, sort_keys=True, default=str)
         change = AddObject(value=Person(id='P1', name='P1'))
         patcher.patch_file(DATA_AS_JSON, [change], out_stream=OUT, target_class=Dataset)
 
-    # TODO: remove override
-    def test_add_remove(self):
-        assert True
 
-    # TODO: remove override
-    def test_append_value(self):
-        assert True
 
+    @unittest.skip("todo")
+    def test_append_with_path(self):
+        """
+        test appending an object to a list
+        """
+        patcher = self.patcher
+        dataset = yaml_loader.load(DATA, target_class=Dataset)
+        change = Append(value=FamilialRelationship(related_to='P:4', type='SIBLING_OF'))
+        change.path = 'persons/P:001/has_familial_relationships/'
+        patcher.apply(change, dataset)
+        logging.info(dataset)
+        #print(yaml_dumper.dumps(dataset))
+        #assert dataset.persons[0].has_familial_relationships[0].related_to == 'P:4'
 
 
 if __name__ == '__main__':

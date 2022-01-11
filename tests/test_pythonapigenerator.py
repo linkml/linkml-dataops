@@ -6,7 +6,7 @@ from linkml_runtime.dumpers import yaml_dumper
 from linkml_runtime.utils.compile_python import compile_python
 
 from linkml_dataops import ObjectQueryEngine
-from linkml_dataops.generators import PythonApiGenerator
+from linkml_dataops.creators import PythonDomainApiCreator
 from linkml_runtime.loaders import yaml_loader
 from linkml_runtime.utils.schemaview import SchemaView
 
@@ -24,7 +24,7 @@ class PythonApiGeneratorTestCase(unittest.TestCase):
 
     def test_pyapigen(self):
         view = SchemaView(SCHEMA)
-        gen = PythonApiGenerator(schemaview=view)
+        gen = PythonDomainApiCreator(schemaview=view)
         code = gen.serialize(python_path='tests.model')
         with open(API_CODE, 'w') as stream:
             stream.write(code)
