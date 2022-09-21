@@ -208,7 +208,7 @@ class ChangerCommonTests:
         patcher = self.patcher
         import tests.model.kitchen_sink as ks
         with open(CHANGE_FILE) as stream:
-            changes = dicts_to_changes(yaml.load(stream), ks)
+            changes = dicts_to_changes(yaml.safe_load(stream), ks)
         dataset: Dataset = yaml_loader.load(DATA, target_class=Dataset)
         patcher.apply_multiple(changes, dataset)
         #print(yaml_dumper.dumps(dataset))

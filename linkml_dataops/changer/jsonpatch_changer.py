@@ -381,7 +381,7 @@ def cli(inputfile, verbose, format: str, module, schema: str, change_file: str, 
     changes = []
     if change_file:
         with open(change_file) as stream:
-            change_dicts = yaml.load(stream)
+            change_dicts = yaml.safe_load(stream)
             changes = dicts_to_changes(change_dicts, python_module)
     for (typ, ystr) in add:
         init_dict = yaml.safe_load(ystr)
