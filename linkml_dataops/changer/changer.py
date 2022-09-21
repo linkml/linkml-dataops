@@ -1,5 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
+from typing import List
 
 from linkml_runtime.utils.formatutils import underscore
 
@@ -34,6 +35,19 @@ class Changer(ApiRoot):
         :return:
         """
         raise NotImplementedError(f'{self} must implement this method')
+
+    def apply_multiple(self, changes: List[Change], element: YAMLRoot) -> List[ChangeResult]:
+        """
+        Applies multiple changes in place
+
+        :param changes:
+        :param element:
+        :return:
+        """
+        results = []
+        for change in changes:
+            results.append(self.apply(change, element, in_place=True))
+        return results
 
     def _map_change_object(self, change: YAMLRoot) -> Change:
         """
@@ -146,7 +160,7 @@ class Changer(ApiRoot):
             elif len(paths) == 1:
                 return paths[0]
             else:
-                raise Exception(f'No matching top level slot')
+                raise ValueError(f'No matching slots in element have a range of {target_cn}')
 
     def _locate_object(self, change: Change, element: YAMLRoot) -> YAMLRoot:
         """

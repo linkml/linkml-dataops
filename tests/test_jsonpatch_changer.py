@@ -11,10 +11,12 @@ from linkml_runtime.utils.yamlutils import YAMLRoot
 
 from linkml_dataops.changer.jsonpatch_changer import JsonPatchChanger
 from linkml_dataops.changer.changes_model import AddObject, RemoveObject, Append, Rename
+from linkml_dataops.changer.obj_utils import dicts_to_changes
 
 from tests.model.kitchen_sink import Person, Dataset, FamilialRelationship
 from tests import MODEL_DIR, INPUT_DIR, OUTPUT_DIR
 from tests.model.kitchen_sink_api import AddPerson
+import tests.model.kitchen_sink_api
 from tests.common_tests import ChangerCommonTests
 
 SCHEMA = os.path.join(MODEL_DIR, 'kitchen_sink.yaml')
@@ -73,6 +75,9 @@ class JsonPatchMakerCommonTests(unittest.TestCase):
 
     def test_domain_api(self):
         self.common.domain_api_test()
+
+    def test_changes_file(self):
+        self.common.change_file_test()
 
     def test_get_json_path(self):
         """
@@ -146,6 +151,14 @@ class JsonPatchMakerCommonTests(unittest.TestCase):
         patcher.patch_file(DATA_AS_JSON, [change], out_stream=OUT, target_class=Dataset)
 
 
+    def test_from_dict(self):
+        changes = dicts_to_changes([{'type': 'AddPerson', 'value': {'id': 'P1', 'name': 'P1'}}],
+                                   tests.model.kitchen_sink_api)
+        print(changes)
+        dataset = yaml_loader.load(DATA, target_class=Dataset)
+        patcher = self.patcher
+        patcher.apply_multiple(changes, dataset)
+        assert any(p.name == 'P1' for p in dataset.persons if p.id == 'P1')
 
     @unittest.skip("todo")
     def test_append_with_path(self):
@@ -160,6 +173,9 @@ class JsonPatchMakerCommonTests(unittest.TestCase):
         logging.info(dataset)
         #print(yaml_dumper.dumps(dataset))
         #assert dataset.persons[0].has_familial_relationships[0].related_to == 'P:4'
+
+    def test_schema_changes(self):
+        patcher = self.patcher
 
 
 if __name__ == '__main__':

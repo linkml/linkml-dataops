@@ -4,13 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-linkml-runtime = ">= 1.1.6"
+linkml-runtime = ">= 1.1.21"
 jsonpath-ng = "*"
 "ruamel.yaml" = "*"
 jsonpatch = "*"
 jinja2 = "*"
+linkml-runtime-api = {editable = true, path = "."}
 
 [dev-packages]
 
 [pipenv]
-allow_prereleases = true
+allow_prereleases = false

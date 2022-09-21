@@ -1,5 +1,8 @@
 import json
-from typing import Any
+import logging
+from copy import copy
+from types import ModuleType
+from typing import Any, List, Dict
 
 from jsonasobj2 import is_list, is_dict, items
 from linkml_runtime.utils.formatutils import is_empty
@@ -7,6 +10,8 @@ from linkml_runtime.utils.formatutils import is_empty
 # this is a copy-and-edit of remove_empty_items in formatutils
 # TODO: rewrite this
 from linkml_runtime.utils.yamlutils import YAMLRoot, as_json_object
+
+from linkml_dataops.changer.changes_model import AddObject, RemoveObject, Change, Rename, Append
 
 
 def to_object(obj: Any, hide_protected_keys: bool = False, inside: bool = False) -> Any:
@@ -46,8 +51,50 @@ def to_object(obj: Any, hide_protected_keys: bool = False, inside: bool = False)
 
 
 def element_to_dict(element: YAMLRoot) -> dict:
-    #jsonstr = json_dumper.dumps(element, inject_type=False)
     jsonstr = json.dumps(as_json_object(element, None, inject_type=False),
                          default=lambda o: to_object(o, hide_protected_keys=True) if isinstance(o, YAMLRoot) else json.JSONDecoder().decode(o),
                          indent='  ')
     return json.loads(jsonstr)
+
+OP_PREFIX_DICT = {
+    'Add': AddObject,
+    'Remove': RemoveObject,
+    'Rename': Rename,
+    'AddTo': Append,
+}
+
+def dicts_to_changes(objs: List[Dict], python_module: ModuleType) -> List[Change]:
+    changes = []
+    for obj in objs:
+        obj = copy(obj)
+        t = obj['type']
+        del obj['type']
+        if t.startswith('Add'):
+            cc = AddObject
+            t = t.replace('Add', '', 1)
+        elif t.startswith('Remove'):
+            cc = RemoveObject
+            t = t.replace('Remove', '', 1)
+        elif t.startswith('Rename'):
+            cc = Rename
+            t = t.replace('Rename', '', 1)
+        elif t.startswith('AppendIn'):
+            cc = Append
+            t = t.replace('AppendIn', '', 1)
+        else:
+            raise ValueError(f'Unknown type: {t}')
+        typ_cls = python_module.__dict__[t]
+        v_dict = obj['value']
+        del obj['value']
+        if cc == Rename:
+            change = Rename(value=v_dict, target_class=typ_cls.class_name, **obj)
+        else:
+            if isinstance(v_dict, dict):
+                v = typ_cls(**v_dict)
+            else:
+                v = typ_cls(v_dict)
+            change = cc(value=v, **obj)
+        logging.debug(f'Created change object: {change}')
+        changes.append(change)
+    return changes
+

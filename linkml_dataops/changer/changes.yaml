@@ -105,6 +105,8 @@ classes:
       A change object that represents the addition of an object to another object
     is_a: Change
     slot_usage:
+      path:
+        required: false
       parent:
         description: the object to which the new object is being added to
       value:
