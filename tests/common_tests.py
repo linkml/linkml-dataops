@@ -4,19 +4,21 @@ import unittest
 from copy import copy
 from dataclasses import dataclass
 
+import yaml
 from linkml_runtime.dumpers import yaml_dumper
 
 from linkml_dataops.changer.changer import Changer
-from linkml_dataops.changer.object_changer import ObjectChanger
+from linkml_dataops.changer.obj_utils import dicts_to_changes
 from linkml_dataops.changer.changes_model import AddObject, RemoveObject, Append, Rename, SetValue
 from linkml_runtime.loaders import yaml_loader
-from linkml_runtime.utils.schemaview import SchemaView
+import tests.model.kitchen_sink
 from tests.model.kitchen_sink import Person, Dataset, FamilialRelationship
 from tests.model.kitchen_sink_api import AddPerson
 from tests import MODEL_DIR, INPUT_DIR
 
 SCHEMA = os.path.join(MODEL_DIR, 'kitchen_sink.yaml')
 DATA = os.path.join(INPUT_DIR, 'kitchen_sink_inst_01.yaml')
+CHANGE_FILE = os.path.join(INPUT_DIR, 'changes_01.yaml')
 
 ADD_PERSON = """
 path: /persons
@@ -201,3 +203,18 @@ class ChangerCommonTests:
                 assert p.has_familial_relationships[0].related_to == 'P:001'
                 ok = True
         assert ok
+
+    def change_file_test(self):
+        patcher = self.patcher
+        import tests.model.kitchen_sink as ks
+        with open(CHANGE_FILE) as stream:
+            changes = dicts_to_changes(yaml.safe_load(stream), ks)
+        dataset: Dataset = yaml_loader.load(DATA, target_class=Dataset)
+        patcher.apply_multiple(changes, dataset)
+        #print(yaml_dumper.dumps(dataset))
+        assert len(dataset.companies) == 1
+        assert dataset.companies[0].name == 'New Company'
+        assert len(dataset.persons) == 3
+        person_index = {p.id: p for p in dataset.persons}
+        assert person_index['P:999'].name == 'fred bloggs'
+        assert person_index['P:NEW'].name == 'New Person'

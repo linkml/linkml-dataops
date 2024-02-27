@@ -4,7 +4,7 @@ import logging
 
 from linkml_dataops.apiroot import ApiRoot
 from linkml_dataops.changer.object_changer import ObjectChanger
-from linkml_dataops.changer.changes_model import Rename
+from linkml_dataops.changer.changes_model import Rename, AddObject
 from linkml_dataops.diffs.differ import DiffEngine
 from linkml_runtime.loaders import yaml_loader
 from linkml_runtime.utils.schemaview import SchemaView
@@ -44,6 +44,7 @@ class PathTestCase(unittest.TestCase):
         obj = api_root.select_path('/persons/1', dataset)
         obj = api_root.select_path('/has_employment_history/0', obj)
         assert isinstance(obj, EmploymentEvent)
+
 
 
 

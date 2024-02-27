@@ -1,4 +1,4 @@
-RUN = pipenv run
+RUN = poetry run
 
 test:
 	$(RUN) python -m unittest discover -p 'test_*.py'

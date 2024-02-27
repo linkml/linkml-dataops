@@ -71,6 +71,8 @@ class ObjectChangerTestCase(unittest.TestCase):
     def test_set_value(self):
         assert True  # TODO: implement this
 
+    def test_changes_file(self):
+        self.common.change_file_test()
 
     def test_remove_by_identifier(self):
         """test removal of object by primary key"""
@@ -107,12 +109,12 @@ class ObjectChangerTestCase(unittest.TestCase):
         patcher = ObjectChanger(schemaview=view)
         person = Person('P:1')
         app = Append(value=FamilialRelationship(related_to='P:4', type='SIBLING_OF'))
+        # implicitly traverses over has_familial_relationships
         path = patcher._get_path(app, person)
-        #logging.info(f'PATH={path}')
         self.assertEqual(path, '/has_familial_relationships')
         loc = patcher._locate_object(app, person)
         #logging.info(f'LOC={loc}')
-        self.assertEqual(loc, [])
+        self.assertEqual(loc, [])  ## currently no relationships
         dataset = Dataset()
         patcher.apply(AddObject(value=person), dataset)
         # TODO: paths of length > 1

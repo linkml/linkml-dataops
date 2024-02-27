@@ -10,17 +10,19 @@ import yaml
 from jsonpatch import JsonPatch
 
 from linkml_runtime.dumpers import json_dumper
-from linkml_runtime.linkml_model import ClassDefinitionName
+from linkml_runtime.linkml_model import ClassDefinitionName, SchemaDefinition
 from linkml_runtime.loaders import json_loader, yaml_loader
 from linkml_runtime.utils.compile_python import compile_python
+from linkml_runtime.utils.introspection import package_schemaview
 from linkml_runtime.utils.schemaview import SchemaView
+import linkml_runtime.linkml_model as linkml_model
 
 from linkml_dataops.changer.changer import Changer, ChangeResult
 from linkml_dataops.changer.changes_model import Change, AddObject, RemoveObject, Append, Rename
 from linkml_runtime.utils.formatutils import underscore
 from linkml_runtime.utils.yamlutils import YAMLRoot
 
-from linkml_dataops.changer.obj_utils import element_to_dict
+from linkml_dataops.changer.obj_utils import element_to_dict, dicts_to_changes
 from linkml_dataops.diffs.yaml_patch import YAMLPatch
 
 OPDICT = Dict[str, Any]
@@ -65,18 +67,7 @@ class JsonPatchChanger(Changer):
                     setattr(element, k, getattr(new_obj, k))
         return ChangeResult(result)
 
-    def apply_multiple(self, changes: List[Change], element: YAMLRoot) -> List[ChangeResult]:
-        """
-        Applies multiple changes in place
 
-        :param changes:
-        :param element:
-        :return:
-        """
-        results = []
-        for change in changes:
-            results.append(self.apply(change, element, in_place=True))
-        return results
 
     def _change_value_as_dict(self, change: Change) -> Dict[str, Any]:
         # TODO: move this functionality into json_dumper
@@ -94,6 +85,7 @@ class JsonPatchChanger(Changer):
         :return:
         """
         change = self._map_change_object(change)
+        logging.info(f'Change: {change}')
         if isinstance(change, AddObject):
             return self.make_add_object_patch(change, element)
         elif isinstance(change, RemoveObject):
@@ -269,7 +261,9 @@ class JsonPatchChanger(Changer):
             obj = yaml_loader.load(input_file, target_class=target_class)
             patches = []
             for change in changes:
-                patches += self.make_patch(change, element=obj)
+                new_patches = self.make_patch(change, element=obj)
+                logging.info(f'Patches: {new_patches}')
+                patches += new_patches
                 self.apply(change, obj, in_place=True)
             # reload with rueaml, preserving comments
             yp = YAMLPatch()
@@ -332,9 +326,10 @@ def _get_format(path: str, specified_format: str =None, default=None):
     return specified_format
 
 @click.command()
+@click.option("-v", "--verbose", count=True)
 @click.option("--format", "-f", help="Input format")
 @click.option("--schema", "-S", help="Path to schema file")
-@click.option("--change-file", "-D", help="File containing yaml of changes")
+@click.option("--change-file", "-I", help="File containing yaml of changes")
 @click.option("--add", "-A", type=(str, str),
               multiple=True,
               help="add objects. List of ClassName, InitArgs dicts")
@@ -348,14 +343,30 @@ def _get_format(path: str, specified_format: str =None, default=None):
 @click.option("--target-class", "-C",
               help="name of class in datamodel that the root node instantiates")
 @click.argument('inputfile')
-def cli(inputfile, format: str, module, schema: str, change_file: str, add: List[str], remove: List[str], target_class: str, output):
+def cli(inputfile, verbose, format: str, module, schema: str, change_file: str, add: List[str], remove: List[str], target_class: str, output):
     """
     Apply changes
 
-    linkml-apply -m kitchen_sink.py -S kitchen_sink.yaml -A Person '{id: X, name: Y}' kitchen_sink_inst_01.yaml
+        linkml-apply -m kitchen_sink.py -S kitchen_sink.yaml -A Person '{id: X, name: Y}' kitchen_sink_inst_01.yaml
     """
-    python_module = compile_python(module)
-    view = SchemaView(schema)
+    if verbose >= 2:
+        logging.basicConfig(level=logging.DEBUG)
+    elif verbose == 1:
+        logging.basicConfig(level=logging.INFO)
+    else:
+        logging.basicConfig(level=logging.WARNING)
+    #if quiet:
+    #    logging.basicConfig(level=logging.ERROR)
+    if module == 'meta':
+        python_module = linkml_model.meta
+        if target_class is None:
+            target_class = 'SchemaDefinition'
+    else:
+        python_module = compile_python(module)
+    if schema is None:
+        view = package_schemaview(python_module.__name__)
+    else:
+        view = SchemaView(schema)
     if target_class is None:
         target_class = infer_root_class(view)
     py_target_class = python_module.__dict__[target_class]
@@ -370,7 +381,8 @@ def cli(inputfile, format: str, module, schema: str, change_file: str, add: List
     changes = []
     if change_file:
         with open(change_file) as stream:
-            changes = yaml.load(stream)
+            change_dicts = yaml.safe_load(stream)
+            changes = dicts_to_changes(change_dicts, python_module)
     for (typ, ystr) in add:
         init_dict = yaml.safe_load(ystr)
         typ_cls = python_module.__dict__[typ]

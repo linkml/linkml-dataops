@@ -45,6 +45,12 @@ class ObjectChanger(Changer):
 
 
     def add_object(self, change: AddObject, element: YAMLRoot) -> ChangeResult:
+        """
+
+        :param change: a change implementing AddObject
+        :param element: element
+        :return:
+        """
         place = self._locate_object(change, element)
         if isinstance(place, dict):
             pk_slot = self._get_primary_key_slot(change)
@@ -97,6 +103,7 @@ class ObjectChanger(Changer):
     # NOTE: changes in place
     def append_value(self, change: Append, element: YAMLRoot) -> ChangeResult:
         place = self._locate_object(change, element)
+        #print(f'Appending: {change.value} to {type(place)} {place}')
         place.append(change.value)
         return ChangeResult(object=element)
 
